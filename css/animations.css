@@ -1,0 +1,338 @@
+/* ===== CSS 애니메이션 & 이펙트 ===== */
+
+/* -- 기본 전환 -- */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+
+/* -- 바운스 (메뉴 이모지) -- */
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-15px);
+    }
+}
+
+/* -- 펄스 (콤보, 서빙 버튼) -- */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* -- 빛 반짝 (완성된 냄비) -- */
+@keyframes glowPulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 10px rgba(102, 187, 106, 0.3);
+    }
+
+    50% {
+        box-shadow: 0 0 25px rgba(102, 187, 106, 0.6), 0 0 50px rgba(102, 187, 106, 0.2);
+    }
+}
+
+/* -- 조리 중 보글보글 -- */
+@keyframes cookingBubble {
+
+    0%,
+    100% {
+        transform: translateY(0) rotate(0deg);
+    }
+
+    25% {
+        transform: translateY(-3px) rotate(-2deg);
+    }
+
+    75% {
+        transform: translateY(-3px) rotate(2deg);
+    }
+}
+
+/* -- 깜빡임 (인내심 위험) -- */
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.3;
+    }
+}
+
+/* -- 떠오르는 돈 -- */
+@keyframes floatUp {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    50% {
+        opacity: 1;
+        transform: translateY(-40px) scale(1.2);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(-80px) scale(0.8);
+    }
+}
+
+/* -- 말풍선 팝업 -- */
+@keyframes bubblePop {
+    0% {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+
+    70% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* -- 고객 등장 -- */
+.customer-enter {
+    animation: customerEnter 0.5s ease forwards;
+}
+
+@keyframes customerEnter {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.8);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* -- 고객 퇴장 (화남) -- */
+.customer-angry {
+    animation: customerAngry 0.6s ease forwards;
+}
+
+@keyframes customerAngry {
+    0% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+
+    30% {
+        transform: translateY(-10px) scale(1.1) rotate(-5deg);
+    }
+
+    100% {
+        transform: translateY(-40px) scale(0.5) rotate(10deg);
+        opacity: 0;
+    }
+}
+
+/* -- 고객 퇴장 (행복) -- */
+.customer-happy {
+    animation: customerHappy 0.6s ease forwards;
+}
+
+@keyframes customerHappy {
+    0% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+
+    40% {
+        transform: translateY(-15px) scale(1.15);
+    }
+
+    100% {
+        transform: translateY(-30px) scale(0.8);
+        opacity: 0;
+    }
+}
+
+/* -- 흔들림 (잘못된 재료) -- */
+.shake {
+    animation: shake 0.5s ease;
+}
+
+@keyframes shake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    10% {
+        transform: translateX(-8px);
+    }
+
+    20% {
+        transform: translateX(8px);
+    }
+
+    30% {
+        transform: translateX(-6px);
+    }
+
+    40% {
+        transform: translateX(6px);
+    }
+
+    50% {
+        transform: translateX(-4px);
+    }
+
+    60% {
+        transform: translateX(4px);
+    }
+
+    70% {
+        transform: translateX(-2px);
+    }
+
+    80% {
+        transform: translateX(2px);
+    }
+}
+
+/* -- 화면 흔들림 (생명 감소) -- */
+.screen-shake {
+    animation: screenShake 0.5s ease;
+}
+
+@keyframes screenShake {
+
+    0%,
+    100% {
+        transform: translate(0, 0);
+    }
+
+    10% {
+        transform: translate(-4px, -2px);
+    }
+
+    20% {
+        transform: translate(4px, 2px);
+    }
+
+    30% {
+        transform: translate(-3px, 1px);
+    }
+
+    40% {
+        transform: translate(3px, -1px);
+    }
+
+    50% {
+        transform: translate(-2px, 2px);
+    }
+
+    60% {
+        transform: translate(2px, -2px);
+    }
+
+    70% {
+        transform: translate(-1px, 1px);
+    }
+
+    80% {
+        transform: translate(1px, -1px);
+    }
+}
+
+/* -- 재료 버튼 클릭 이펙트 -- */
+.ingredient-btn:active::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(circle, rgba(255, 107, 53, 0.3) 0%, transparent 70%);
+    animation: ripple 0.4s ease forwards;
+    pointer-events: none;
+}
+
+@keyframes ripple {
+    from {
+        transform: scale(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: scale(2);
+        opacity: 0;
+    }
+}
+
+/* -- 서빙 성공 파티클 (간단한 CSS 버전) -- */
+.serve-success::after {
+    content: '✨';
+    position: absolute;
+    font-size: 24px;
+    animation: sparkle 0.8s ease forwards;
+    pointer-events: none;
+}
+
+@keyframes sparkle {
+    0% {
+        opacity: 1;
+        transform: scale(0.5) rotate(0deg);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.5) rotate(180deg);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(0.5) rotate(360deg);
+    }
+}
