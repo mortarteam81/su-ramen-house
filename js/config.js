@@ -149,5 +149,15 @@ export const GAME = {
     COMBO_BONUS: 500,          // 콤보 보너스 금액
 };
 
+// 메뉴 자동 해금 기준 (세션 누적 수익)
+export const MENU_UNLOCK_THRESHOLDS = [
+    { money: 5000, menuId: 'kimchi', message: '김치 라면 해금!' },
+    { money: 12000, menuId: 'spicy', message: '매운 라면 해금!' },
+    { money: 22000, menuId: 'tteok', message: '떡라면 해금!' },
+    { money: 35000, menuId: 'cheese', message: '치즈 라면 해금!' },
+    { money: 55000, menuId: 'seafood', message: '해물 라면 해금!' },
+    { money: 80000, menuId: 'special', message: '⭐ 스페셜 라면 해금!' },
+];
+
 // 저장 키
 export const STORAGE_KEY = 'ramen_shop_save';

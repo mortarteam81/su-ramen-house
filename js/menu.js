@@ -32,6 +32,14 @@ export class MenuManager {
         return { success: true, cost: recipe.unlockCost };
     }
 
+    /** 메뉴 강제 해금 (자동 해금용, 돈 차감 없음) */
+    forceUnlock(menuId) {
+        if (!RECIPES[menuId]) return false;
+        if (this.isUnlocked(menuId)) return false;
+        this.unlockedMenus.push(menuId);
+        return true;
+    }
+
     /** 레시피 정보 가져오기 */
     getRecipe(menuId) {
         return RECIPES[menuId] || null;

@@ -1,5 +1,5 @@
 /* ===== 게임 루프 & 상태 관리 ===== */
-import { GAME } from './config.js';
+import { GAME, MENU_UNLOCK_THRESHOLDS } from './config.js';
 import { CookingStation } from './cooking.js';
 import { CustomerManager } from './customer.js';
 import { MenuManager } from './menu.js';
@@ -38,6 +38,7 @@ export class Game {
         this.onGameOver = null;       // 게임 오버
         this.onCombo = null;          // 콤보 달성
         this.onLifeLost = null;       // 생명 감소
+        this.onMenuUnlock = null;     // 메뉴 해금
 
         this._animFrameId = null;
         this._pauseStartTime = null;
@@ -133,6 +134,9 @@ export class Game {
             if (this.onServeSuccess) {
                 this.onServeSuccess(customer, reward, this.combo);
             }
+
+            // 수익 기반 메뉴 자동 해금 체크
+            this.checkAutoUnlock();
         }
 
         return { success: true, reward, customer };
@@ -148,6 +152,18 @@ export class Game {
     confirmCook(recipeId) {
         if (this.state !== GAME_STATE.PLAYING) return null;
         return this.cooking.confirmCook(recipeId);
+    }
+
+    /** 수익 기반 메뉴 자동 해금 */
+    checkAutoUnlock() {
+        for (const threshold of MENU_UNLOCK_THRESHOLDS) {
+            if (this.sessionMoney >= threshold.money && !this.menuManager.isUnlocked(threshold.menuId)) {
+                this.menuManager.forceUnlock(threshold.menuId);
+                if (this.onMenuUnlock) {
+                    this.onMenuUnlock(threshold.menuId, threshold.message, threshold.money);
+                }
+            }
+        }
     }
 
     /** 냄비 선택 */

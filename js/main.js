@@ -207,6 +207,11 @@ function startNewGame() {
         ui.updateMenuScreen(game.saveData);
     };
 
+    game.onMenuUnlock = (menuId, message, threshold) => {
+        const recipe = RECIPES[menuId];
+        ui.showToast(`🎉 ${recipe.emoji} ${message}`, 'success', 3000);
+    };
+
     game.startGame();
 }
 
