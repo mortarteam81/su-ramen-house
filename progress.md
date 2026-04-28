@@ -200,3 +200,19 @@ Verification passed:
 - `node --check js/*.js`
 - `node scripts/first-bowl-regression.mjs`
 - `node scripts/game-regression.mjs`
+
+## 2026-04-28 Wave 14 Implementation — Mobile Ingredient More Panel
+
+User reported that only water/noodle/soup/egg are visible on mobile, making hidden ingredients hard to discover.
+
+Implemented:
+- Added mobile `더보기` / `접기` toggle button to ingredient shelf.
+- Collapsed mobile tray intentionally shows first four core ingredients plus a clear `더보기` tile.
+- Expanded tray shows all ingredients in a 3-column panel.
+- Added `_review/wave14-ingredient-more-capture.mjs` for mobile collapsed/expanded screenshots.
+
+Verification passed:
+- `node --check js/*.js`
+- `node scripts/first-bowl-regression.mjs`
+- `node scripts/game-regression.mjs`
+- Vision QA for 375x667 collapsed/expanded ingredient tray: no serious issues.
