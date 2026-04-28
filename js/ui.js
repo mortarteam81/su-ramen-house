@@ -578,19 +578,15 @@ export class UI {
     }
 
     showDiscardFeedback({ potId, cost = 0 } = {}) {
+        const message = cost > 0
+            ? `🗑️ 폐기 완료 · 재료비 손실 -${cost.toLocaleString()}원`
+            : '🗑️ 폐기 완료 · 다시 만들 수 있어요!';
+        this.showToast(message, cost > 0 ? 'warning' : 'info', 1800);
+
         const potEl = potId !== null ? document.getElementById(`pot-${potId}`) : null;
         if (!potEl) return;
         potEl.classList.add('discard-feedback');
         setTimeout(() => potEl.classList.remove('discard-feedback'), 760);
-
-        const label = document.createElement('div');
-        label.className = 'serve-result-pop fail';
-        label.textContent = cost > 0 ? `재료비 손실 -${cost.toLocaleString()}원` : '폐기 완료';
-        const rect = potEl.getBoundingClientRect();
-        label.style.left = `${rect.left + rect.width / 2}px`;
-        label.style.top = `${rect.top}px`;
-        document.body.appendChild(label);
-        setTimeout(() => label.remove(), 1200);
     }
 
     showComboCelebration(combo, bonus) {

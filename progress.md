@@ -60,3 +60,21 @@ Recommended sequence:
 4. Wave 9: lightweight day story cards.
 
 Key principle: failure recovery and economy first, story second.
+
+## 2026-04-28 Wave 8/9 Implementation — Economy, Discard, Story MVP
+
+Implemented and locally verified:
+- Slowed customer success lifecycle: eating/paying/leaving now remains visible for ~2.7s; angry leaving ~1.1s.
+- Added pot-level discard button for filling/cooking/done states.
+- Added recipe production costs and cost tracking on pots (`costSpent`, `costCharged`).
+- Charges production cost when cooking starts; discard does not refund spent cost.
+- Added cost/profit display in recipe hints and shop/menu encyclopedia.
+- Added Day 1 story intro overlay and day goal/success/failure text structure.
+- Updated regression tests for story intro, discard recovery, production cost, and net profit.
+- Adjusted toast placement/feedback to avoid blocking key UI; discard loss uses bottom-right non-blocking toast plus pot highlight.
+
+Verification passed:
+- `node --check js/*.js`
+- `node scripts/first-bowl-regression.mjs`
+- `node scripts/game-regression.mjs`
+- `_review/wave8-capture.mjs` screenshot review: no serious blocking/readability issue remaining.
