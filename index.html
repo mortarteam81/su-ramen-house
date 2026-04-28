@@ -30,6 +30,13 @@
         <span id="menu-highscore">최고 기록: 0원</span>
       </div>
     </div>
+
+    <!-- 모바일 주문 요약 -->
+    <div class="mobile-order-summary" id="mobile-order-summary" aria-live="polite">
+      <span class="mobile-order-label">현재 주문</span>
+      <strong id="mobile-order-name">주문 대기 중</strong>
+      <span id="mobile-order-recipe" class="mobile-order-recipe"></span>
+    </div>
   </section>
 
   <!-- ===== 게임 방법 화면 ===== -->
@@ -212,6 +219,15 @@
     <!-- 재료 선반 -->
     <div class="ingredient-shelf" id="ingredient-shelf">
       <!-- JS로 동적 생성 -->
+    </div>
+
+    <!-- 모바일 핵심 액션 바 -->
+    <div class="mobile-action-bar" id="mobile-action-bar" aria-live="polite">
+      <div class="mobile-action-info">
+        <span id="mobile-action-title">냄비를 선택하세요</span>
+        <small id="mobile-action-detail">주문을 보고 빈 냄비를 눌러 시작하세요</small>
+      </div>
+      <div class="mobile-action-buttons" id="mobile-action-buttons"></div>
     </div>
   </section>
 

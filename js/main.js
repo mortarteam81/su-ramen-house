@@ -96,34 +96,47 @@ document.getElementById('btn-tomenu').addEventListener('click', () => {
     initMenuScreen();
 });
 
+function handleDiscardPot(potIndex) {
+    const result = game.discardPot(potIndex);
+    if (result?.success) {
+        const cost = result.discarded?.costSpent || 0;
+        ui.hideRecipeHint();
+        ui.setChefState('surprised', cost > 0 ? '재료비는 손실됐지만 다시 만들면 돼요!' : '다시 만들어 볼까요?', { duration: 1300 });
+        ui.showDiscardFeedback({ potId: potIndex, cost });
+    } else if (result) {
+        ui.showToast(result.reason, 'warning');
+    }
+    return result;
+}
+
+function handleServePot(potIndex) {
+    const result = game.tryServe(potIndex);
+    if (result && !result.success) {
+        const potEl = document.getElementById(`pot-${potIndex}`);
+        ui.showToast(result.reason, 'warning');
+        ui.setChefState('surprised', result.reason, { duration: 1000 });
+        ui.showServeFeedback({ success: false, message: result.reason, potId: potIndex });
+        if (potEl) {
+            potEl.classList.add('mismatch', 'shake');
+            setTimeout(() => potEl.classList.remove('mismatch', 'shake'), 600);
+        }
+    }
+    return result;
+}
+
 // 냄비 클릭 (선택 + 서빙)
 document.querySelectorAll('.pot-container').forEach(potEl => {
     potEl.addEventListener('click', (e) => {
         // 서빙 버튼 클릭 시
         if (e.target.classList.contains('btn-serve')) {
             const potIndex = parseInt(potEl.dataset.pot);
-            const result = game.tryServe(potIndex);
-            if (result && !result.success) {
-                ui.showToast(result.reason, 'warning');
-                ui.setChefState('surprised', result.reason, { duration: 1000 });
-                ui.showServeFeedback({ success: false, message: result.reason, potId: potIndex });
-                potEl.classList.add('mismatch', 'shake');
-                setTimeout(() => potEl.classList.remove('mismatch', 'shake'), 600);
-            }
+            handleServePot(potIndex);
             return;
         }
 
         if (e.target.classList.contains('btn-discard')) {
             const potIndex = parseInt(potEl.dataset.pot);
-            const result = game.discardPot(potIndex);
-            if (result?.success) {
-                const cost = result.discarded?.costSpent || 0;
-                ui.hideRecipeHint();
-                ui.setChefState('surprised', cost > 0 ? '재료비는 손실됐지만 다시 만들면 돼요!' : '다시 만들어 볼까요?', { duration: 1300 });
-                ui.showDiscardFeedback({ potId: potIndex, cost });
-            } else if (result) {
-                ui.showToast(result.reason, 'warning');
-            }
+            handleDiscardPot(potIndex);
             return;
         }
 
@@ -233,6 +246,12 @@ function startNewGame({ replayFirstBowlGuide = false, dayIndex = null } = {}) {
         ui.updatePots(g.cooking);
         ui.updateGuidance(g);
         ui.updateFirstBowlGuide(g);
+        ui.updateMobileOrderSummary(g);
+        ui.updateMobileActionBar(g, {
+            onConfirmCook: handleConfirmCook,
+            onServe: handleServePot,
+            onDiscard: handleDiscardPot,
+        });
 
         // 고객 인내심 업데이트
         for (const customer of g.customers.seats) {

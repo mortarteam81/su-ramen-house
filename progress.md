@@ -139,3 +139,29 @@ Verification passed:
 - `node scripts/game-regression.mjs`
 - `node _review/wave10-mobile-capture.mjs`
 - Vision QA for 375x667 start/CTA/done and 768x1024 tablet sanity: no serious blockers after final fixes.
+
+## 2026-04-28 Wave 11 Implementation — Mobile No-Scroll Cooking Flow
+
+User tested Wave 10 on mobile and confirmed it worked, but reported the main usability problem: checking the customer order, scrolling to select the pot, then scrolling again to tap cook was too web-page-like.
+
+Approved approach: apply sticky order summary + bottom mobile action bar, and only partially apply mobile-board restructuring.
+
+Implemented:
+- Added `docs/mobile-no-scroll-flow-plan.md`.
+- Added mobile-only current order summary (`#mobile-order-summary`) showing the most urgent active order and recipe icons.
+- Added mobile-only bottom action bar (`#mobile-action-bar`) with state-aware actions:
+  - no pot selected: select pot prompt
+  - empty/filling: selected pot summary and cook CTA when confirmable
+  - cooking: remaining time + discard
+  - done: serve + discard
+- Reused existing game handlers for confirm cook, serve, and discard so desktop behavior remains consistent.
+- Added stable mobile action rendering signature to avoid replacing buttons every animation frame.
+- Adjusted small-phone layout so empty customer seats are hidden, active order remains compact, ingredients become horizontal tray, and pot area remains tappable.
+- Added `_review/wave11-mobile-capture.mjs` for 375/390/tablet screenshots.
+
+Verification passed:
+- `node --check js/*.js`
+- `node scripts/first-bowl-regression.mjs`
+- `node scripts/game-regression.mjs`
+- `node _review/wave11-mobile-capture.mjs`
+- Vision QA for 375x667 start/CTA/done and 390x844 CTA found no no-scroll flow blockers.

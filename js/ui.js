@@ -66,6 +66,13 @@ export class UI {
         this.ingredientShelf = document.getElementById('ingredient-shelf');
         this.recipeHint = document.getElementById('recipe-hint');
         this.recipeHintContent = document.getElementById('recipe-hint-content');
+        this.mobileOrderSummary = document.getElementById('mobile-order-summary');
+        this.mobileOrderName = document.getElementById('mobile-order-name');
+        this.mobileOrderRecipe = document.getElementById('mobile-order-recipe');
+        this.mobileActionBar = document.getElementById('mobile-action-bar');
+        this.mobileActionTitle = document.getElementById('mobile-action-title');
+        this.mobileActionDetail = document.getElementById('mobile-action-detail');
+        this.mobileActionButtons = document.getElementById('mobile-action-buttons');
         this.chef = document.getElementById('chef-character');
         this.chefSpeech = document.getElementById('chef-speech');
         this.chefStateTimer = null;
@@ -96,6 +103,7 @@ export class UI {
         // 토스트 / 이펙트
         this.toastContainer = document.getElementById('toast-container');
         this.doneEffectPotIds = new Set();
+        this.mobileActionSignature = '';
     }
 
     // ===== 꾸미기 적용 =====
@@ -464,6 +472,126 @@ export class UI {
                     break;
             }
         }
+    }
+
+    updateMobileOrderSummary(game) {
+        if (!this.mobileOrderSummary) return;
+        const activeCustomers = this.getActiveCustomers(game)
+            .sort((a, b) => a.patienceRemaining - b.patienceRemaining);
+        const customer = activeCustomers[0];
+        if (!customer) {
+            this.mobileOrderName.textContent = '주문 대기 중';
+            this.mobileOrderRecipe.textContent = '';
+            this.mobileOrderSummary.classList.add('is-empty');
+            return;
+        }
+
+        const recipe = RECIPES[customer.menuId];
+        const type = CUSTOMER_TYPES[customer.type];
+        const icons = recipe?.ingredients
+            .map(id => INGREDIENTS[id]?.emoji || '?')
+            .join(' → ') || '';
+        this.mobileOrderSummary.classList.remove('is-empty');
+        this.mobileOrderName.textContent = `${type?.emoji || '🙂'} ${recipe?.emoji || '🍜'} ${recipe?.name || customer.menuId}`;
+        this.mobileOrderRecipe.textContent = icons;
+    }
+
+    updateMobileActionBar(game, handlers = {}) {
+        if (!this.mobileActionBar || !this.mobileActionButtons) return;
+        const render = (signature, state, title, detail, buttons = []) => {
+            if (this.mobileActionSignature === signature) return;
+            this.mobileActionSignature = signature;
+            this.mobileActionBar.dataset.state = state;
+            this.mobileActionTitle.textContent = title;
+            this.mobileActionDetail.textContent = detail;
+            this.mobileActionButtons.innerHTML = '';
+            buttons.forEach(button => this.mobileActionButtons.appendChild(button));
+        };
+
+        const selectedPotIndex = game.cooking.selectedPot;
+        const selectedPot = game.cooking.getSelectedPot();
+        if (selectedPotIndex === null || !selectedPot) {
+            render('none', 'idle', '냄비를 선택하세요', '주문을 보고 빈 냄비를 눌러 시작하세요');
+            return;
+        }
+
+        const potLabel = `냄비 ${selectedPotIndex + 1}`;
+        const addedText = selectedPot.addedIngredients
+            .map(id => INGREDIENTS[id]?.emoji || '?')
+            .join(' ');
+
+        if (selectedPot.state === POT_STATE.EMPTY) {
+            render(`empty:${selectedPotIndex}`, 'empty', `${potLabel} 선택됨`, '물부터 넣어주세요');
+            return;
+        }
+
+        if (selectedPot.state === POT_STATE.FILLING) {
+            const confirmable = this.getConfirmableRecipesForPot(selectedPot);
+            const buttons = [];
+            if (confirmable.length) {
+                const recipe = RECIPES[confirmable[0]];
+                buttons.push(this.createMobileActionButton(
+                    `🔥 조리 시작 · ${Number(recipe?.cost || 0).toLocaleString()}원`,
+                    'primary',
+                    () => handlers.onConfirmCook?.(confirmable[0])
+                ));
+            }
+            buttons.push(this.createMobileActionButton('🗑️ 버리기', 'secondary danger', () => handlers.onDiscard?.(selectedPotIndex)));
+            render(
+                `filling:${selectedPotIndex}:${selectedPot.addedIngredients.join(',')}:${confirmable.join(',')}`,
+                confirmable.length ? 'confirmable' : 'filling',
+                `${potLabel}: ${addedText || '재료 투입 중'}`,
+                confirmable.length ? '바로 조리를 시작할 수 있어요' : '주문 레시피에 맞게 재료를 더 넣으세요',
+                buttons
+            );
+            return;
+        }
+
+        if (selectedPot.state === POT_STATE.COOKING) {
+            const remaining = Math.ceil((1 - selectedPot.cookProgress) * (selectedPot.cookDuration / 1000));
+            render(
+                `cooking:${selectedPotIndex}:${remaining}:${selectedPot.costSpent}`,
+                'cooking',
+                `${potLabel}: 보글보글 조리 중`,
+                `${remaining}초 남음 · 재료비 ${Number(selectedPot.costSpent || 0).toLocaleString()}원`,
+                [this.createMobileActionButton('🗑️ 버리기', 'secondary danger', () => handlers.onDiscard?.(selectedPotIndex))]
+            );
+            return;
+        }
+
+        if (selectedPot.state === POT_STATE.DONE) {
+            const recipe = RECIPES[selectedPot.targetRecipe];
+            render(
+                `done:${selectedPotIndex}:${selectedPot.targetRecipe}`,
+                'done',
+                `${recipe?.emoji || '🍜'} ${recipe?.name || '라면'} 완성`,
+                '손님에게 서빙하거나 버릴 수 있어요',
+                [
+                    this.createMobileActionButton('✅ 서빙하기', 'primary', () => handlers.onServe?.(selectedPotIndex)),
+                    this.createMobileActionButton('🗑️ 버리기', 'secondary danger', () => handlers.onDiscard?.(selectedPotIndex)),
+                ]
+            );
+        }
+    }
+
+    createMobileActionButton(label, variant, onClick) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `mobile-action-btn ${variant}`;
+        button.textContent = label;
+        button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            onClick?.();
+        });
+        return button;
+    }
+
+    getConfirmableRecipesForPot(pot) {
+        if (!pot || pot.state !== POT_STATE.FILLING || pot.addedIngredients.length === 0) return [];
+        return Object.entries(RECIPES)
+            .filter(([, recipe]) => recipe.ingredients.length === pot.addedIngredients.length
+                && recipe.ingredients.every((ingredient, index) => ingredient === pot.addedIngredients[index]))
+            .map(([id]) => id);
     }
 
     setPotIngredientsMarkup(ingredientsEl, markup, signature) {
