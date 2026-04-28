@@ -189,6 +189,29 @@ async function scenarioStoryIntro(browser, baseUrl) {
   }
 }
 
+async function scenarioDayProgression(browser, baseUrl) {
+  const page = await newRegressionPage(browser, baseUrl);
+  try {
+    await page.evaluate(() => {
+      const key = 'ramen_shop_save';
+      const save = JSON.parse(localStorage.getItem(key) || '{}');
+      localStorage.setItem(key, JSON.stringify({ ...save, currentDayIndex: 1, completedDays: [0] }));
+    });
+    await page.reload({ waitUntil: 'networkidle' });
+    await page.click('#btn-start');
+    let storyText = await page.locator('#overlay-story').innerText();
+    if (!storyText.includes('Day 2') || !storyText.includes('하교 시간')) {
+      throw new Error(`Expected Day 2 story after saved progression, got: ${storyText}`);
+    }
+    await page.click('#btn-story-start');
+    let state = await waitForState(page, (s) => s.state === 'playing' && s.currentDayIndex === 1, 'Day 2 starts from saved progression');
+    if (state.currentDay.day !== 2) throw new Error('Debug state did not start Day 2');
+    return { savedDay: 2, state: state.state };
+  } finally {
+    await page.close().catch(() => {});
+  }
+}
+
 async function scenarioWrongIngredientRejection(browser, baseUrl) {
   const page = await newRegressionPage(browser, baseUrl);
   try {
@@ -364,6 +387,7 @@ const browser = await chromium.launch({ headless: true });
 const results = {};
 try {
   results.storyIntro = await scenarioStoryIntro(browser, baseUrl);
+  results.dayProgression = await scenarioDayProgression(browser, baseUrl);
   results.firstBowl = await scenarioFirstBowl(browser, baseUrl);
   results.wrongIngredient = await scenarioWrongIngredientRejection(browser, baseUrl);
   results.cookingCostAndDiscard = await scenarioCookingCostAndDiscard(browser, baseUrl);

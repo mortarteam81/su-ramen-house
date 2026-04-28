@@ -91,6 +91,7 @@ export class UI {
         this.goCombo = document.getElementById('go-combo');
         this.goTitle = document.getElementById('go-title');
         this.goResult = document.getElementById('go-result');
+        this.goRetryButton = document.getElementById('btn-retry');
 
         // 토스트 / 이펙트
         this.toastContainer = document.getElementById('toast-container');
@@ -305,6 +306,9 @@ export class UI {
     // ===== 메인 메뉴 =====
     updateMenuScreen(saveData) {
         this.menuHighscore.textContent = `최고 기록: ${saveData.highScore.toLocaleString()}원`;
+        const day = Math.max(1, (Number(saveData.currentDayIndex) || 0) + 1);
+        const subtitle = document.querySelector('.subtitle');
+        if (subtitle) subtitle.textContent = `Day ${day}부터 영업을 시작합니다!`;
     }
 
     // ===== 재료 선반 생성 =====
@@ -946,6 +950,11 @@ export class UI {
             this.goResult.textContent = stats.dayCleared
                 ? (stats.day?.clearText || '오늘 목표를 달성했습니다!')
                 : (stats.day?.failText || (stats.day ? `${stats.day.title} 목표: ${stats.day.goalText}` : '다음에는 더 잘할 수 있어요!'));
+        }
+        if (this.goRetryButton) {
+            this.goRetryButton.textContent = stats.dayCleared
+                ? (stats.hasNextDay ? '➡️ 다음 날로' : '🏆 처음부터 다시')
+                : '🔄 같은 날 다시 하기';
         }
         this.goServed.textContent = stats.served;
         this.goMoney.textContent = stats.money.toLocaleString();

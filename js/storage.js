@@ -7,6 +7,8 @@ const DEFAULT_SAVE = {
     totalServed: 0,
     unlockedMenus: ['basic', 'egg'],
     bestCombo: 0,
+    currentDayIndex: 0,
+    completedDays: [],
     menuStats: {},
     cosmetics: DEFAULT_COSMETICS,
 };
@@ -52,6 +54,8 @@ export function loadGame() {
                 ...DEFAULT_SAVE,
                 ...parsed,
                 unlockedMenus: Array.isArray(parsed.unlockedMenus) ? parsed.unlockedMenus : DEFAULT_SAVE.unlockedMenus,
+                currentDayIndex: Math.max(0, Number(parsed.currentDayIndex) || 0),
+                completedDays: Array.isArray(parsed.completedDays) ? [...new Set(parsed.completedDays.map(Number).filter(Number.isFinite))] : [],
                 menuStats: normalizeMenuStats(parsed.menuStats),
                 cosmetics: normalizeCosmetics(parsed.cosmetics),
             };
@@ -70,6 +74,8 @@ export function saveGame(data) {
             totalServed: data.totalServed,
             unlockedMenus: data.unlockedMenus,
             bestCombo: data.bestCombo,
+            currentDayIndex: Math.max(0, Number(data.currentDayIndex) || 0),
+            completedDays: Array.isArray(data.completedDays) ? [...new Set(data.completedDays.map(Number).filter(Number.isFinite))] : [],
             menuStats: normalizeMenuStats(data.menuStats),
             cosmetics: normalizeCosmetics(data.cosmetics),
         };

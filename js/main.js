@@ -7,6 +7,7 @@ import { RECIPES, INGREDIENTS, CUSTOMER_TYPES, DAY_STAGES } from './config.js';
 const game = new Game();
 const ui = new UI();
 let previousPotStates = [];
+let lastGameOverStats = null;
 
 // ===== 화면 초기화 =====
 function initMenuScreen() {
@@ -84,7 +85,11 @@ document.getElementById('btn-quit').addEventListener('click', () => {
 
 // 게임 오버
 document.getElementById('btn-retry').addEventListener('click', () => {
-    showStoryThenStart();
+    if (lastGameOverStats?.dayCleared) {
+        showStoryThenStart();
+    } else {
+        showStoryThenStart({ dayIndex: lastGameOverStats?.dayIndex ?? game.currentDayIndex });
+    }
 });
 
 document.getElementById('btn-tomenu').addEventListener('click', () => {
@@ -156,11 +161,13 @@ function handleConfirmCook(recipeId) {
 
 // ===== 게임 시작 =====
 function showStoryThenStart(options = {}) {
-    const day = DAY_STAGES[0];
-    ui.showStoryIntro(day, () => startNewGame(options));
+    const requestedDayIndex = options.dayIndex ?? game.saveData.currentDayIndex ?? 0;
+    const safeDayIndex = Math.min(Math.max(0, Number(requestedDayIndex) || 0), DAY_STAGES.length - 1);
+    const day = DAY_STAGES[safeDayIndex] || DAY_STAGES[0];
+    ui.showStoryIntro(day, () => startNewGame({ ...options, dayIndex: safeDayIndex }));
 }
 
-function startNewGame({ replayFirstBowlGuide = false } = {}) {
+function startNewGame({ replayFirstBowlGuide = false, dayIndex = null } = {}) {
     ui.applyCosmetics(game.getCosmetics());
     ui.showScreen('game');
     ui.resetSeats();
@@ -293,6 +300,7 @@ function startNewGame({ replayFirstBowlGuide = false } = {}) {
     };
 
     game.onGameOver = (stats) => {
+        lastGameOverStats = stats;
         ui.showGameOver(stats);
         // 저장 데이터 갱신
         ui.updateMenuScreen(game.saveData);
@@ -303,7 +311,8 @@ function startNewGame({ replayFirstBowlGuide = false } = {}) {
         ui.showToast(`🎉 ${recipe.emoji} ${message}`, 'success', 3000);
     };
 
-    game.startGame();
+    lastGameOverStats = null;
+    game.startGame({ dayIndex });
 }
 
 // ===== 상점 열기 =====
@@ -378,6 +387,9 @@ function getGameDebugState() {
         combo: game.combo,
         maxCombo: game.maxCombo,
         currentDay: game.currentDay,
+        currentDayIndex: game.currentDayIndex,
+        saveDayIndex: game.saveData.currentDayIndex,
+        completedDays: [...(game.saveData.completedDays || [])],
         dayCleared: game.dayCleared,
         cosmetics: game.getCosmetics(),
         cosmeticDataAttrs: {

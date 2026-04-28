@@ -78,3 +78,22 @@ Verification passed:
 - `node scripts/first-bowl-regression.mjs`
 - `node scripts/game-regression.mjs`
 - `_review/wave8-capture.mjs` screenshot review: no serious blocking/readability issue remaining.
+
+## 2026-04-28 Day Progression Fix
+
+User reported that pressing retry felt like Day 1 restarted. Root cause: story MVP only had `DAY_STAGES[0]` and `startGame()` always reset `currentDay` to Day 1.
+
+Implemented:
+- Added Day 2–5 story/goal/fail/clear data.
+- Added persisted `currentDayIndex` and `completedDays` to save data.
+- `Game.startGame({ dayIndex })` now starts the requested/saved day.
+- Clearing a day advances saved `currentDayIndex`; failing does not advance it.
+- Retry button text now distinguishes `same day retry`, `next day`, and final reset.
+- Menu subtitle shows which day will start.
+- Regression coverage verifies saved Day 2 progression starts Day 2.
+
+Verification passed:
+- `node --check js/*.js`
+- `node scripts/first-bowl-regression.mjs`
+- `node scripts/game-regression.mjs`
+- `_review/day-progression-capture.mjs` screenshot review for Day 2 intro: no serious issue.

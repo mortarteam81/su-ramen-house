@@ -29,7 +29,8 @@ export class Game {
         this.combo = 0;
         this.maxCombo = 0;
         this.sessionMoney = 0;   // 이번 게임에서 번 돈
-        this.currentDay = DAY_STAGES[0];
+        this.currentDayIndex = Math.min(Math.max(0, Number(this.saveData.currentDayIndex) || 0), DAY_STAGES.length - 1);
+        this.currentDay = DAY_STAGES[this.currentDayIndex] || DAY_STAGES[0];
         this.difficultyKey = this.currentDay?.difficulty || DEFAULT_DIFFICULTY;
         this.difficulty = DIFFICULTY_PRESETS[this.difficultyKey] || DIFFICULTY_PRESETS[DEFAULT_DIFFICULTY];
         this.dayCleared = false;
@@ -52,7 +53,7 @@ export class Game {
     }
 
     /** 게임 시작 */
-    startGame() {
+    startGame({ dayIndex = null } = {}) {
         this.state = GAME_STATE.PLAYING;
         this.money = this.saveData.money;
         this.served = 0;
@@ -61,7 +62,9 @@ export class Game {
         this.maxCombo = 0;
         this.sessionMoney = 0;
         this.dayCleared = false;
-        this.currentDay = DAY_STAGES[0];
+        const requestedDayIndex = dayIndex === null ? this.saveData.currentDayIndex : dayIndex;
+        this.currentDayIndex = Math.min(Math.max(0, Number(requestedDayIndex) || 0), DAY_STAGES.length - 1);
+        this.currentDay = DAY_STAGES[this.currentDayIndex] || DAY_STAGES[0];
         this.difficultyKey = this.currentDay?.difficulty || DEFAULT_DIFFICULTY;
         this.difficulty = DIFFICULTY_PRESETS[this.difficultyKey] || DIFFICULTY_PRESETS[DEFAULT_DIFFICULTY];
 
@@ -314,7 +317,9 @@ export class Game {
                 served: this.served,
                 maxCombo: this.maxCombo,
                 day: this.currentDay,
+                dayIndex: this.currentDayIndex,
                 dayCleared: this.dayCleared,
+                hasNextDay: this.currentDayIndex < DAY_STAGES.length - 1,
             });
         }
     }
@@ -323,6 +328,13 @@ export class Game {
     _completeDay() {
         if (this.dayCleared) return;
         this.dayCleared = true;
+        if (!Array.isArray(this.saveData.completedDays)) this.saveData.completedDays = [];
+        if (!this.saveData.completedDays.includes(this.currentDayIndex)) {
+            this.saveData.completedDays.push(this.currentDayIndex);
+        }
+        this.saveData.currentDayIndex = this.currentDayIndex < DAY_STAGES.length - 1
+            ? this.currentDayIndex + 1
+            : 0;
         if (this.onDayClear) this.onDayClear(this.currentDay);
         this._endGame();
     }
