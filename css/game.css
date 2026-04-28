@@ -1486,3 +1486,39 @@
         flex: 0 1 132px;
     }
 }
+
+/* ===== 가게 꾸미기 아이템 ===== */
+#screen-game[data-sign-cosmetic="sign_neon"] .wall-sign {
+    background: linear-gradient(180deg, #27183f, #12071f);
+    border-color: #ff6bd6;
+    color: #fff4ff;
+    box-shadow: 0 0 14px rgba(255, 107, 214, 0.75), 0 0 28px rgba(86, 205, 255, 0.35);
+    text-shadow: 0 0 8px #ff6bd6, 0 0 14px #56cdff;
+}
+
+#screen-game[data-counter-cosmetic="counter_wood"] .counter-backdrop,
+#screen-game[data-counter-cosmetic="counter_wood"] .shop-wall::after {
+    background:
+        repeating-linear-gradient(90deg, rgba(92, 45, 19, 0.22) 0 16px, rgba(255, 224, 167, 0.08) 16px 30px),
+        linear-gradient(180deg, #b8793d, #6e3b22);
+    border-color: rgba(96, 48, 21, 0.92);
+}
+
+#screen-game[data-counter-cosmetic="counter_wood"] .seat {
+    border-color: rgba(128, 72, 31, 0.7);
+    background: rgba(78, 43, 23, 0.42);
+}
+
+#screen-game[data-bowl-cosmetic="bowl_blue"] .pot-visual {
+    background: radial-gradient(circle at 50% 40%, rgba(140, 218, 255, 0.25), rgba(31, 87, 143, 0.28)), var(--color-bg-warm);
+    border-color: #4fc3f7;
+}
+
+#screen-game[data-bowl-cosmetic="bowl_blue"] .pot-container.done .pot-visual,
+#screen-game[data-bowl-cosmetic="bowl_blue"] .pot-container.selected .pot-visual {
+    box-shadow: 0 0 0 4px rgba(79, 195, 247, 0.18), 0 14px 28px rgba(33, 150, 243, 0.24);
+}
+
+#screen-game[data-bowl-cosmetic="bowl_blue"] .pot-progress-bar.done {
+    background: linear-gradient(90deg, #4fc3f7, #b3e5fc);
+}

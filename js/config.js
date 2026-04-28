@@ -205,5 +205,42 @@ export const MENU_UNLOCK_THRESHOLDS = [
     { money: 80000, menuId: 'special', message: '⭐ 스페셜 라면 해금!' },
 ];
 
+// 가게 꾸미기 아이템. 메뉴 해금과 분리된 순수 꾸미기 전용 구매 목록이다.
+export const COSMETIC_ITEMS = {
+    sign_neon: {
+        id: 'sign_neon',
+        type: 'sign',
+        name: '네온 간판',
+        description: '벽 간판이 반짝이는 네온 스타일로 바뀝니다.',
+        emoji: '✨',
+        cost: 2000,
+    },
+    counter_wood: {
+        id: 'counter_wood',
+        type: 'counter',
+        name: '나무 조리대',
+        description: '따뜻한 나무 무늬 조리대로 분위기를 바꿉니다.',
+        emoji: '🪵',
+        cost: 3000,
+    },
+    bowl_blue: {
+        id: 'bowl_blue',
+        type: 'bowl',
+        name: '파란 그릇 테마',
+        description: '완성 라면과 냄비 포인트가 시원한 파란 그릇 느낌으로 바뀝니다.',
+        emoji: '💙',
+        cost: 2500,
+    },
+};
+
+export const DEFAULT_COSMETICS = {
+    owned: [],
+    equipped: {
+        sign: 'default',
+        counter: 'default',
+        bowl: 'default',
+    },
+};
+
 // 저장 키
 export const STORAGE_KEY = 'ramen_shop_save';

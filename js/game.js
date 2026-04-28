@@ -1,5 +1,5 @@
 /* ===== 게임 루프 & 상태 관리 ===== */
-import { DAY_STAGES, DEFAULT_DIFFICULTY, DIFFICULTY_PRESETS, GAME, MENU_UNLOCK_THRESHOLDS } from './config.js';
+import { COSMETIC_ITEMS, DAY_STAGES, DEFAULT_DIFFICULTY, DIFFICULTY_PRESETS, GAME, MENU_UNLOCK_THRESHOLDS } from './config.js';
 import { CookingStation } from './cooking.js';
 import { CustomerManager } from './customer.js';
 import { MenuManager } from './menu.js';
@@ -23,7 +23,7 @@ export class Game {
         this.customers = new CustomerManager(this.menuManager);
 
         // 게임 내 상태
-        this.money = 0;
+        this.money = this.saveData.money;
         this.served = 0;
         this.lives = GAME.MAX_LIVES;
         this.combo = 0;
@@ -141,6 +141,7 @@ export class Game {
             this.sessionMoney += reward.total;
             this.served++;
             this.combo++;
+            this.recordMenuServe(customer.menuId, reward);
 
             // 첫 그릇 성공 후에만 다음 손님 스폰 타이머를 다시 시작한다.
             if (this.served === 1) {
@@ -170,6 +171,23 @@ export class Game {
         }
 
         return { success: true, reward, customer };
+    }
+
+    recordMenuServe(menuId, reward) {
+        if (!menuId || !reward) return;
+
+        if (!this.saveData.menuStats || typeof this.saveData.menuStats !== 'object') {
+            this.saveData.menuStats = {};
+        }
+
+        const current = this.saveData.menuStats[menuId] || { served: 0, bestTip: 0, bestReward: 0 };
+        const tipTotal = Number(reward.tip) || 0;
+
+        this.saveData.menuStats[menuId] = {
+            served: (Number(current.served) || 0) + 1,
+            bestTip: Math.max(Number(current.bestTip) || 0, tipTotal),
+            bestReward: Math.max(Number(current.bestReward) || 0, Number(reward.total) || 0),
+        };
     }
 
     breakCombo(message) {
@@ -294,6 +312,50 @@ export class Game {
         return result;
     }
 
+    /** 꾸미기 아이템 구매 */
+    buyCosmetic(itemId) {
+        const item = COSMETIC_ITEMS[itemId];
+        if (!item) return { success: false, reason: '알 수 없는 꾸미기 아이템입니다.' };
+
+        const cosmetics = this.saveData.cosmetics;
+        if (cosmetics.owned.includes(itemId)) {
+            return { success: false, reason: '이미 보유한 아이템입니다.' };
+        }
+        if (this.money < item.cost) {
+            return { success: false, reason: '소지금이 부족합니다.' };
+        }
+
+        this.money -= item.cost;
+        cosmetics.owned.push(itemId);
+        cosmetics.equipped[item.type] = itemId;
+        this.saveData.money = this.money;
+        saveGame(this.saveData);
+        return { success: true, item };
+    }
+
+    /** 보유한 꾸미기 아이템 장착 */
+    equipCosmetic(itemId) {
+        const item = COSMETIC_ITEMS[itemId];
+        if (!item) return { success: false, reason: '알 수 없는 꾸미기 아이템입니다.' };
+        if (!this.saveData.cosmetics.owned.includes(itemId)) {
+            return { success: false, reason: '먼저 구매해야 장착할 수 있습니다.' };
+        }
+
+        this.saveData.cosmetics.equipped[item.type] = itemId;
+        saveGame(this.saveData);
+        return { success: true, item };
+    }
+
+    /** 기본 꾸미기로 되돌리기 */
+    equipDefaultCosmetic(type) {
+        if (!this.saveData.cosmetics.equipped || !(type in this.saveData.cosmetics.equipped)) {
+            return { success: false, reason: '알 수 없는 꾸미기 종류입니다.' };
+        }
+        this.saveData.cosmetics.equipped[type] = 'default';
+        saveGame(this.saveData);
+        return { success: true, type };
+    }
+
     /** 메뉴 메인으로 */
     goToMenu() {
         this.state = GAME_STATE.MENU;
@@ -305,6 +367,10 @@ export class Game {
     /** 소지금 (저장 데이터의 money) */
     getTotalMoney() {
         return this.money;
+    }
+
+    getCosmetics() {
+        return this.saveData.cosmetics;
     }
 }
 

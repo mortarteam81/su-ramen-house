@@ -345,17 +345,129 @@ html, body {
   margin-bottom: var(--space-lg);
 }
 
+.shop-section-title {
+  grid-column: 1 / -1;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  background: rgba(255, 213, 79, 0.14);
+  border: 1px solid rgba(255, 179, 71, 0.35);
+}
+
+.shop-section-title h3 {
+  margin: 0 0 4px;
+  color: var(--color-secondary);
+  font-size: 18px;
+}
+
+.shop-section-title p {
+  margin: 0;
+  color: var(--color-text-dim);
+  font-size: 12px;
+}
+
+.shop-cosmetic-section {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-sm);
+}
+
+.shop-cosmetic-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: var(--space-sm);
+}
+
+.shop-cosmetic-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-sm);
+  align-items: center;
+  padding: var(--space-sm);
+  border: 2px solid var(--color-surface-light);
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgba(255,255,255,0.64), rgba(255,236,199,0.55));
+}
+
+.shop-cosmetic-card.equipped {
+  border-color: var(--color-secondary);
+  box-shadow: 0 0 0 3px rgba(255, 213, 79, 0.18);
+}
+
+.cosmetic-emoji {
+  font-size: 30px;
+}
+
+.cosmetic-info h4 {
+  margin: 0 0 4px;
+  color: var(--color-text);
+  font-size: 14px;
+}
+
+.cosmetic-info p {
+  margin: 0 0 5px;
+  color: var(--color-text-dim);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.cosmetic-price {
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.cosmetic-actions {
+  grid-column: 1 / -1;
+}
+
+.btn-cosmetic-buy,
+.btn-cosmetic-equip {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.btn-cosmetic-buy:disabled,
+.btn-cosmetic-equip:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.shop-cosmetic-reset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  justify-content: flex-end;
+}
+
 .shop-menu-card {
   background: var(--color-bg-warm);
   border-radius: var(--radius-md);
   padding: var(--space-md);
   border: 2px solid var(--color-surface-light);
   transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .shop-menu-card.unlocked {
   border-color: var(--color-success);
   opacity: 0.85;
+}
+
+.shop-menu-card.never-served.unlocked {
+  border-style: dashed;
+}
+
+.shop-menu-card.locked {
+  background: linear-gradient(135deg, var(--color-surface), var(--color-bg-warm));
+}
+
+.shop-menu-card.locked .shop-card-emoji {
+  filter: grayscale(1) brightness(0.25);
+  opacity: 0.55;
+  text-shadow: 0 0 14px rgba(0, 0, 0, 0.45);
 }
 
 .shop-menu-card.locked:hover {
@@ -380,6 +492,39 @@ html, body {
   color: var(--color-text);
 }
 
+.shop-card-title {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shop-card-status {
+  align-self: flex-start;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: white;
+  background: var(--color-text-muted);
+}
+
+.shop-card-status.unlocked {
+  background: var(--color-success);
+}
+
+.shop-card-status.new {
+  background: var(--color-accent);
+  color: var(--color-text);
+}
+
+.shop-card-status.first {
+  background: var(--color-primary);
+}
+
+.shop-card-status.locked {
+  background: var(--color-text-muted);
+}
+
 .shop-card-info {
   font-size: 12px;
   color: var(--color-text-dim);
@@ -388,6 +533,23 @@ html, body {
 
 .shop-card-recipe {
   font-size: 14px;
+}
+
+.shop-card-collection {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: var(--space-sm);
+}
+
+.shop-card-collection span {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--color-surface-light);
+  border-radius: var(--radius-sm);
+  padding: 5px 6px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--color-text);
 }
 
 .shop-card-badge {

@@ -10,6 +10,7 @@ const ui = new UI();
 // ===== 화면 초기화 =====
 function initMenuScreen() {
     ui.updateMenuScreen(game.saveData);
+    ui.applyCosmetics(game.getCosmetics());
     ui.showScreen('menu');
 }
 
@@ -137,6 +138,7 @@ function handleConfirmCook(recipeId) {
 
 // ===== 게임 시작 =====
 function startNewGame({ replayFirstBowlGuide = false } = {}) {
+    ui.applyCosmetics(game.getCosmetics());
     ui.showScreen('game');
     ui.resetSeats();
     ui.hideRecipeHint();
@@ -260,17 +262,56 @@ function startNewGame({ replayFirstBowlGuide = false } = {}) {
 
 // ===== 상점 열기 =====
 function openShop() {
+    const refreshShop = () => {
+        ui.applyCosmetics(game.getCosmetics());
+        ui.updateShop(game.menuManager, game.money, handleUnlock, game.saveData, {
+            onBuy: handleCosmeticBuy,
+            onEquip: handleCosmeticEquip,
+            onReset: handleCosmeticReset,
+        });
+    };
+
     const handleUnlock = (menuId) => {
         const result = game.unlockMenu(menuId);
         if (result.success) {
             ui.showToast(`🎉 ${RECIPES[menuId].name} 해금!`, 'success');
-            // 상점 UI 갱신
-            ui.updateShop(game.menuManager, game.money, handleUnlock);
+            refreshShop();
         } else {
             ui.showToast(result.reason, 'warning');
         }
     };
-    ui.updateShop(game.menuManager, game.money, handleUnlock);
+
+    const handleCosmeticBuy = (itemId) => {
+        const result = game.buyCosmetic(itemId);
+        if (result.success) {
+            ui.showToast(`🎨 ${result.item.name} 구매 및 장착!`, 'success');
+            refreshShop();
+        } else {
+            ui.showToast(result.reason, 'warning');
+        }
+    };
+
+    const handleCosmeticEquip = (itemId) => {
+        const result = game.equipCosmetic(itemId);
+        if (result.success) {
+            ui.showToast(`✨ ${result.item.name} 장착!`, 'success');
+            refreshShop();
+        } else {
+            ui.showToast(result.reason, 'warning');
+        }
+    };
+
+    const handleCosmeticReset = (type) => {
+        const result = game.equipDefaultCosmetic(type);
+        if (result.success) {
+            ui.showToast('기본 꾸미기로 변경했습니다.', 'info');
+            refreshShop();
+        } else {
+            ui.showToast(result.reason, 'warning');
+        }
+    };
+
+    refreshShop();
     ui.showScreen('shop');
 }
 
@@ -292,6 +333,12 @@ function getGameDebugState() {
         maxCombo: game.maxCombo,
         currentDay: game.currentDay,
         dayCleared: game.dayCleared,
+        cosmetics: game.getCosmetics(),
+        cosmeticDataAttrs: {
+            sign: document.getElementById('screen-game')?.dataset.signCosmetic || 'default',
+            counter: document.getElementById('screen-game')?.dataset.counterCosmetic || 'default',
+            bowl: document.getElementById('screen-game')?.dataset.bowlCosmetic || 'default',
+        },
         selectedPot: game.cooking.selectedPot,
         customers: game.customers.seats.map((customer, seatIndex) => {
             if (!customer || customer.left) return null;

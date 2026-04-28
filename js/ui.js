@@ -1,5 +1,5 @@
 /* ===== UI 업데이트 & DOM 조작 ===== */
-import { INGREDIENTS, RECIPES, CUSTOMER_TYPES } from './config.js';
+import { COSMETIC_ITEMS, INGREDIENTS, RECIPES, CUSTOMER_TYPES } from './config.js';
 import { POT_STATE } from './cooking.js';
 
 const FIRST_BOWL_GUIDE_KEY = 'ramen_shop_first_bowl_guide_hidden';
@@ -76,6 +76,22 @@ export class UI {
         // 토스트 / 이펙트
         this.toastContainer = document.getElementById('toast-container');
         this.doneEffectPotIds = new Set();
+    }
+
+    // ===== 꾸미기 적용 =====
+    applyCosmetics(cosmetics = {}) {
+        const equipped = cosmetics.equipped || {};
+        const gameScreen = this.screens.game;
+        if (!gameScreen) return;
+
+        gameScreen.dataset.signCosmetic = equipped.sign || 'default';
+        gameScreen.dataset.counterCosmetic = equipped.counter || 'default';
+        gameScreen.dataset.bowlCosmetic = equipped.bowl || 'default';
+
+        const signEl = gameScreen.querySelector('.wall-sign');
+        if (signEl) {
+            signEl.textContent = equipped.sign === 'sign_neon' ? '라면 OPEN' : '라면';
+        }
     }
 
     // ===== 첫 그릇 가이드 =====
@@ -625,31 +641,67 @@ export class UI {
         }
     }
 
+    getMenuCollectionStats(saveData, menuId) {
+        const stats = saveData?.menuStats?.[menuId] || {};
+        return {
+            served: Math.max(0, Number(stats.served) || 0),
+            bestTip: Math.max(0, Number(stats.bestTip) || 0),
+            bestReward: Math.max(0, Number(stats.bestReward) || 0),
+        };
+    }
+
+    getMenuBadge(menu, stats) {
+        if (!menu.unlocked) return '<span class="shop-card-status locked">🔒 미해금</span>';
+        if (stats.served === 0) return '<span class="shop-card-status new">✨ NEW</span>';
+        if (stats.served === 1) return '<span class="shop-card-status first">🏆 첫 판매 완료</span>';
+        return '<span class="shop-card-status unlocked">✅ 해금됨</span>';
+    }
+
     // ===== 상점 UI =====
-    updateShop(menuManager, money, onUnlock) {
+    updateShop(menuManager, money, onUnlock, saveData = null, cosmeticHandlers = {}) {
         this.shopMoneyDisplay.textContent = money.toLocaleString();
         this.shopMenuList.innerHTML = '';
 
+        this.shopMenuList.appendChild(this.renderCosmeticShop(money, saveData?.cosmetics || {}, cosmeticHandlers));
+
+        const menuSectionTitle = document.createElement('div');
+        menuSectionTitle.className = 'shop-section-title';
+        menuSectionTitle.innerHTML = '<h3>🍜 메뉴 도감</h3><p>새 레시피를 해금하고 판매 기록을 모아요.</p>';
+        this.shopMenuList.appendChild(menuSectionTitle);
+
         const allMenus = menuManager.getAllMenuInfo();
         for (const menu of allMenus) {
+            const stats = this.getMenuCollectionStats(saveData, menu.id);
             const card = document.createElement('div');
-            card.className = `shop-menu-card ${menu.unlocked ? 'unlocked' : 'locked'}`;
+            card.className = `shop-menu-card ${menu.unlocked ? 'unlocked' : 'locked'} ${stats.served === 0 ? 'never-served' : 'served'}`;
 
             const ingredientList = menu.ingredients
                 .map(i => INGREDIENTS[i]?.emoji || '?').join(' → ');
+            const displayName = menu.unlocked ? menu.name : '??? 라면';
+            const displayRecipe = menu.unlocked ? ingredientList : '해금하면 레시피가 공개됩니다';
+            const bestTipText = stats.bestTip > 0 ? `${stats.bestTip.toLocaleString()}원` : '-';
+            const bestRewardText = stats.bestReward > 0 ? `${stats.bestReward.toLocaleString()}원` : '-';
 
             card.innerHTML = `
         <div class="shop-card-header">
-          <span class="shop-card-emoji">${menu.emoji}</span>
-          <h3>${menu.name}</h3>
+          <span class="shop-card-emoji" aria-hidden="true">${menu.emoji}</span>
+          <div class="shop-card-title">
+            <h3>${displayName}</h3>
+            ${this.getMenuBadge(menu, stats)}
+          </div>
         </div>
         <div class="shop-card-info">
-          <p class="shop-card-recipe">레시피: ${ingredientList}</p>
+          <p class="shop-card-recipe">레시피: ${displayRecipe}</p>
           <p class="shop-card-price">판매가: ${menu.price.toLocaleString()}원</p>
           <p class="shop-card-time">조리 시간: ${menu.cookTime / 1000}초</p>
+          <div class="shop-card-collection" aria-label="메뉴 판매 기록">
+            <span>판매 ${stats.served.toLocaleString()}그릇</span>
+            <span>최고 팁 ${bestTipText}</span>
+            <span>최고 보상 ${bestRewardText}</span>
+          </div>
         </div>
         ${menu.unlocked
-                    ? '<div class="shop-card-badge">✅ 해금됨</div>'
+                    ? '<div class="shop-card-badge">도감에 등록됨</div>'
                     : `<button class="btn btn-unlock" data-menu-id="${menu.id}" ${money < menu.unlockCost ? 'disabled' : ''}>
               🔓 해금 (${menu.unlockCost.toLocaleString()}원)
             </button>`
@@ -665,6 +717,65 @@ export class UI {
 
             this.shopMenuList.appendChild(card);
         }
+    }
+
+    renderCosmeticShop(money, cosmeticState = {}, handlers = {}) {
+        const owned = new Set(cosmeticState.owned || []);
+        const equipped = cosmeticState.equipped || {};
+        const section = document.createElement('div');
+        section.className = 'shop-cosmetic-section';
+
+        const title = document.createElement('div');
+        title.className = 'shop-section-title';
+        title.innerHTML = '<h3>🎨 가게 꾸미기</h3><p>메뉴 해금과 별개로 가게 분위기만 바뀌는 장식입니다.</p>';
+        section.appendChild(title);
+
+        const grid = document.createElement('div');
+        grid.className = 'shop-cosmetic-grid';
+
+        for (const item of Object.values(COSMETIC_ITEMS)) {
+            const isOwned = owned.has(item.id);
+            const isEquipped = equipped[item.type] === item.id;
+            const card = document.createElement('div');
+            card.className = `shop-cosmetic-card ${isOwned ? 'owned' : 'locked'} ${isEquipped ? 'equipped' : ''}`;
+            card.innerHTML = `
+        <div class="cosmetic-emoji">${item.emoji}</div>
+        <div class="cosmetic-info">
+          <h4>${item.name}</h4>
+          <p>${item.description}</p>
+          <span class="cosmetic-price">${item.cost.toLocaleString()}원</span>
+        </div>
+        <div class="cosmetic-actions">
+          ${isOwned
+                    ? `<button class="btn btn-cosmetic-equip" data-cosmetic-id="${item.id}" ${isEquipped ? 'disabled' : ''}>${isEquipped ? '장착중' : '장착'}</button>`
+                    : `<button class="btn btn-cosmetic-buy" data-cosmetic-id="${item.id}" ${money < item.cost ? 'disabled' : ''}>구매</button>`
+                }
+        </div>
+      `;
+
+            const buyBtn = card.querySelector('.btn-cosmetic-buy');
+            if (buyBtn && !buyBtn.disabled) buyBtn.addEventListener('click', () => handlers.onBuy?.(item.id));
+
+            const equipBtn = card.querySelector('.btn-cosmetic-equip');
+            if (equipBtn && !equipBtn.disabled) equipBtn.addEventListener('click', () => handlers.onEquip?.(item.id));
+
+            grid.appendChild(card);
+        }
+
+        const resetRow = document.createElement('div');
+        resetRow.className = 'shop-cosmetic-reset';
+        resetRow.innerHTML = `
+      <button class="btn btn-small" data-reset-cosmetic="sign">기본 간판</button>
+      <button class="btn btn-small" data-reset-cosmetic="counter">기본 조리대</button>
+      <button class="btn btn-small" data-reset-cosmetic="bowl">기본 그릇</button>
+    `;
+        resetRow.querySelectorAll('[data-reset-cosmetic]').forEach(btn => {
+            btn.addEventListener('click', () => handlers.onReset?.(btn.dataset.resetCosmetic));
+        });
+
+        section.appendChild(grid);
+        section.appendChild(resetRow);
+        return section;
     }
 
     // ===== 게임오버 화면 =====
