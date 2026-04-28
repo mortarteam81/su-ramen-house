@@ -98,6 +98,7 @@ document.querySelectorAll('.pot-container').forEach(potEl => {
             const result = game.tryServe(potIndex);
             if (result && !result.success) {
                 ui.showToast(result.reason, 'warning');
+                ui.showServeFeedback({ success: false, message: result.reason, potId: potIndex });
                 potEl.classList.add('mismatch', 'shake');
                 setTimeout(() => potEl.classList.remove('mismatch', 'shake'), 600);
             }
@@ -145,7 +146,13 @@ function startNewGame({ replayFirstBowlGuide = false } = {}) {
     ui.createIngredientShelf((ingredientId) => {
         if (game.state !== GAME_STATE.PLAYING) return;
 
+        const selectedPotBeforeAdd = game.cooking.selectedPot;
         const result = game.addIngredient(ingredientId);
+        if (result?.success && selectedPotBeforeAdd !== null) {
+            ui.throwIngredientToPot(ingredientId, selectedPotBeforeAdd);
+        } else {
+            ui.pulseIngredientButton(ingredientId);
+        }
         if (!result) {
             ui.showToast('냄비를 먼저 선택하세요!', 'warning');
             return;
@@ -203,7 +210,8 @@ function startNewGame({ replayFirstBowlGuide = false } = {}) {
     game.onServeSuccess = (customer, reward, combo) => {
         if (game.served === 1) ui.completeFirstBowlGuide();
         ui.flashCustomerMatch(customer, 'success');
-        setTimeout(() => ui.removeCustomer(customer.seatIndex, false), 350);
+        ui.showServeFeedback({ success: true, customer, reward });
+        setTimeout(() => ui.removeCustomer(customer.seatIndex, false), 500);
         ui.showToast(`✅ 서빙 성공! +${reward.total.toLocaleString()}원`, 'success');
 
         // 플로팅 머니
@@ -216,6 +224,7 @@ function startNewGame({ replayFirstBowlGuide = false } = {}) {
 
     game.onCombo = (combo, bonus) => {
         ui.showToast(`🔥 ${combo} 콤보! +${bonus.toLocaleString()}원 보너스!`, 'combo');
+        ui.showComboCelebration(combo, bonus);
     };
 
     game.onLifeLost = (lives) => {

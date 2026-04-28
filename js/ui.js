@@ -60,8 +60,9 @@ export class UI {
         this.goMoney = document.getElementById('go-money');
         this.goCombo = document.getElementById('go-combo');
 
-        // 토스트
+        // 토스트 / 이펙트
         this.toastContainer = document.getElementById('toast-container');
+        this.doneEffectPotIds = new Set();
     }
 
     // ===== 첫 그릇 가이드 =====
@@ -105,6 +106,11 @@ export class UI {
 
     completeFirstBowlGuide() {
         this.firstGuideActive = false;
+        try {
+            localStorage.setItem(FIRST_BOWL_GUIDE_KEY, '1');
+        } catch {
+            // 저장소를 사용할 수 없어도 현재 게임에서는 닫는다.
+        }
         if (this.firstBowlGuide) this.firstBowlGuide.style.display = 'none';
     }
 
@@ -264,6 +270,7 @@ export class UI {
             if (!el) continue;
 
             const potIcon = el.querySelector('.pot-icon');
+            const potVisual = el.querySelector('.pot-visual');
             const ingredientsEl = el.querySelector('.pot-ingredients');
             const progressBar = el.querySelector('.pot-progress-bar');
             const statusEl = el.querySelector('.pot-status');
@@ -276,51 +283,183 @@ export class UI {
             switch (pot.state) {
                 case POT_STATE.EMPTY:
                     potIcon.textContent = '🍳';
-                    ingredientsEl.innerHTML = '';
+                    this.setPotIngredientsMarkup(ingredientsEl, '', 'empty');
+                    this.renderPotAccents(potVisual, pot);
                     progressBar.style.width = '0%';
                     progressBar.className = 'pot-progress-bar';
                     statusEl.textContent = '빈 냄비 (클릭하여 선택)';
                     serveBtn.style.display = 'none';
                     el.classList.remove('cooking', 'done');
+                    this.doneEffectPotIds.delete(pot.id);
                     break;
 
                 case POT_STATE.FILLING:
                     potIcon.textContent = '🍳';
-                    ingredientsEl.innerHTML = pot.addedIngredients
-                        .map(id => INGREDIENTS[id]?.emoji || '?').join(' ');
+                    this.setPotIngredientsMarkup(ingredientsEl, this.getIngredientChipsMarkup(pot.addedIngredients), pot.addedIngredients.join(','));
+                    this.renderPotAccents(potVisual, pot);
                     progressBar.style.width = '0%';
                     progressBar.className = 'pot-progress-bar';
                     statusEl.textContent = `재료 투입 중... (${pot.addedIngredients.length}개)`;
                     serveBtn.style.display = 'none';
                     el.classList.remove('cooking', 'done');
+                    this.doneEffectPotIds.delete(pot.id);
                     break;
 
                 case POT_STATE.COOKING:
                     potIcon.textContent = '🔥';
-                    ingredientsEl.innerHTML = pot.addedIngredients
-                        .map(id => INGREDIENTS[id]?.emoji || '?').join(' ');
+                    this.setPotIngredientsMarkup(ingredientsEl, this.getIngredientChipsMarkup(pot.addedIngredients), pot.addedIngredients.join(','));
+                    this.renderPotAccents(potVisual, pot);
                     progressBar.style.width = `${pot.cookProgress * 100}%`;
                     progressBar.className = 'pot-progress-bar cooking';
                     const remaining = Math.ceil((1 - pot.cookProgress) * (pot.cookDuration / 1000));
-                    statusEl.textContent = `조리 중... ${remaining}초`;
+                    statusEl.textContent = `보글보글 조리 중... ${remaining}초`;
                     serveBtn.style.display = 'none';
                     el.classList.add('cooking');
                     el.classList.remove('done');
+                    this.doneEffectPotIds.delete(pot.id);
                     break;
 
                 case POT_STATE.DONE:
                     const recipe = RECIPES[pot.targetRecipe];
                     potIcon.textContent = '🍜';
-                    ingredientsEl.innerHTML = recipe ? `${recipe.emoji} ${recipe.name}` : '완성!';
+                    this.setPotIngredientsMarkup(ingredientsEl, recipe ? `${recipe.emoji} ${recipe.name}` : '완성!', `done:${pot.targetRecipe || ''}`);
+                    this.renderPotAccents(potVisual, pot);
                     progressBar.style.width = '100%';
                     progressBar.className = 'pot-progress-bar done';
-                    statusEl.textContent = '완성! 서빙하세요!';
+                    statusEl.textContent = '띵! 완성! 서빙하세요!';
                     serveBtn.style.display = 'block';
                     el.classList.remove('cooking');
                     el.classList.add('done');
+                    if (!this.doneEffectPotIds.has(pot.id)) {
+                        this.doneEffectPotIds.add(pot.id);
+                        this.showPotDoneEffect(pot.id);
+                    }
                     break;
             }
         }
+    }
+
+    setPotIngredientsMarkup(ingredientsEl, markup, signature) {
+        if (!ingredientsEl || ingredientsEl.dataset.ingredientsSignature === signature) return;
+        ingredientsEl.dataset.ingredientsSignature = signature;
+        ingredientsEl.innerHTML = markup;
+    }
+
+    getIngredientChipsMarkup(ingredientIds) {
+        return ingredientIds
+            .map(id => {
+                const ingredient = INGREDIENTS[id];
+                if (!ingredient) return '<span class="pot-ingredient-chip">?</span>';
+                return `<span class="pot-ingredient-chip" style="--accent:${ingredient.color}" title="${ingredient.name}">${ingredient.emoji}</span>`;
+            })
+            .join(' ');
+    }
+
+    renderPotAccents(potVisual, pot) {
+        if (!potVisual) return;
+        const signature = `${pot.state}:${pot.addedIngredients.join(',')}:${pot.targetRecipe || ''}`;
+        if (potVisual.dataset.accentSignature === signature) return;
+        potVisual.dataset.accentSignature = signature;
+        potVisual.querySelectorAll('.pot-bubbles, .pot-steam, .pot-accent-ring, .pot-done-sparkles').forEach(el => el.remove());
+
+        if (pot.addedIngredients.length > 0) {
+            const ring = document.createElement('div');
+            ring.className = 'pot-accent-ring';
+            const colors = pot.addedIngredients
+                .map(id => INGREDIENTS[id]?.color)
+                .filter(Boolean);
+            ring.style.background = colors.length > 1
+                ? `conic-gradient(${colors.join(', ')}, ${colors[0]})`
+                : (colors[0] || 'rgba(255,255,255,0.25)');
+            potVisual.prepend(ring);
+        }
+
+        if (pot.state === POT_STATE.COOKING) {
+            const steam = document.createElement('div');
+            steam.className = 'pot-steam';
+            steam.innerHTML = '<span></span><span></span><span></span>';
+            potVisual.appendChild(steam);
+
+            const bubbles = document.createElement('div');
+            bubbles.className = 'pot-bubbles';
+            bubbles.innerHTML = '<span></span><span></span><span></span><span></span>';
+            potVisual.appendChild(bubbles);
+        }
+
+        if (pot.state === POT_STATE.DONE) {
+            const sparkles = document.createElement('div');
+            sparkles.className = 'pot-done-sparkles';
+            sparkles.textContent = '✨ 띵! ✨';
+            potVisual.appendChild(sparkles);
+        }
+    }
+
+    pulseIngredientButton(ingredientId) {
+        const btn = this.ingredientShelf?.querySelector(`[data-ingredient="${ingredientId}"]`);
+        if (!btn) return;
+        btn.classList.remove('ingredient-picked');
+        void btn.offsetWidth;
+        btn.classList.add('ingredient-picked');
+        setTimeout(() => btn.classList.remove('ingredient-picked'), 450);
+    }
+
+    throwIngredientToPot(ingredientId, potId) {
+        this.pulseIngredientButton(ingredientId);
+        const btn = this.ingredientShelf?.querySelector(`[data-ingredient="${ingredientId}"]`);
+        const potEl = document.getElementById(`pot-${potId}`);
+        const ingredient = INGREDIENTS[ingredientId];
+        if (!btn || !potEl || !ingredient) return;
+
+        const from = btn.getBoundingClientRect();
+        const to = potEl.querySelector('.pot-icon')?.getBoundingClientRect() || potEl.getBoundingClientRect();
+        const fly = document.createElement('div');
+        fly.className = 'flying-ingredient';
+        fly.textContent = ingredient.emoji;
+        fly.style.left = `${from.left + from.width / 2}px`;
+        fly.style.top = `${from.top + from.height / 2}px`;
+        fly.style.setProperty('--tx', `${to.left + to.width / 2 - from.left - from.width / 2}px`);
+        fly.style.setProperty('--ty', `${to.top + to.height / 2 - from.top - from.height / 2}px`);
+        document.body.appendChild(fly);
+        potEl.classList.add('pot-receive');
+        setTimeout(() => fly.remove(), 520);
+        setTimeout(() => potEl.classList.remove('pot-receive'), 420);
+    }
+
+    showPotDoneEffect(potId) {
+        const potEl = document.getElementById(`pot-${potId}`);
+        if (!potEl) return;
+        potEl.classList.remove('pot-ding');
+        void potEl.offsetWidth;
+        potEl.classList.add('pot-ding');
+        setTimeout(() => potEl.classList.remove('pot-ding'), 900);
+    }
+
+    showServeFeedback({ success, customer = null, message = '', reward = null, potId = null } = {}) {
+        const targetEl = customer ? this.getCustomerEl(customer) : (potId !== null ? document.getElementById(`pot-${potId}`) : null);
+        if (targetEl) {
+            targetEl.classList.add(success ? 'serve-feedback-success' : 'serve-feedback-fail');
+            setTimeout(() => targetEl.classList.remove('serve-feedback-success', 'serve-feedback-fail'), 760);
+        }
+
+        const label = document.createElement('div');
+        label.className = `serve-result-pop ${success ? 'success' : 'fail'}`;
+        label.textContent = success
+            ? `맛있어요! ${reward ? `+${reward.total.toLocaleString()}원` : ''}`.trim()
+            : (message || '서빙 실패!');
+
+        const rect = targetEl?.getBoundingClientRect();
+        label.style.left = `${(rect ? rect.left + rect.width / 2 : window.innerWidth / 2)}px`;
+        label.style.top = `${(rect ? rect.top : window.innerHeight / 2)}px`;
+        document.body.appendChild(label);
+        setTimeout(() => label.remove(), 1100);
+    }
+
+    showComboCelebration(combo, bonus) {
+        const el = document.createElement('div');
+        el.className = 'combo-celebration';
+        el.innerHTML = `<div class="combo-celebration-card"><span>🔥</span><strong>${combo} 콤보!</strong><small>+${bonus.toLocaleString()}원 보너스</small></div>`;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 1400);
     }
 
     // ===== 레시피 힌트 =====
