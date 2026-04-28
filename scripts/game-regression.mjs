@@ -178,7 +178,7 @@ async function scenarioStoryIntro(browser, baseUrl) {
     await page.goto(baseUrl, { waitUntil: 'networkidle' });
     await page.click('#btn-start');
     const storyText = await page.locator('#overlay-story').innerText();
-    if (!storyText.includes('Day 1') || !storyText.includes('첫 오픈날') || !storyText.includes('라면 8그릇 서빙')) {
+    if (!storyText.includes('Day 1') || !storyText.includes('첫 오픈날') || !storyText.includes('라면 5그릇 서빙')) {
       throw new Error(`Story intro copy missing expected content: ${storyText}`);
     }
     await page.click('#btn-story-start');

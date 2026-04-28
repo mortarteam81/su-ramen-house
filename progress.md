@@ -216,3 +216,20 @@ Verification passed:
 - `node scripts/first-bowl-regression.mjs`
 - `node scripts/game-regression.mjs`
 - Vision QA for 375x667 collapsed/expanded ingredient tray: no serious issues.
+
+## 2026-04-28 Wave 15 Implementation — Elementary-Friendly Pacing
+
+User reported customers arrive too fast on mobile and asked to lower overall difficulty for elementary-school players.
+
+Implemented:
+- Increased customer patience across all customer types.
+- Slowed spawn intervals for easy/normal/challenge presets.
+- Day goals reduced: Day 1=5, Day 2=7, Day 3=9, Day 4=10, Day 5=12.
+- Day 1/2 now use easy difficulty; Day 4 moved to normal; Day 5 remains challenge but softer.
+- Mobile pacing multiplier in `CustomerManager`: +35% spawn interval, +18% patience, and extra early-customer breather.
+- Added `docs/elementary-balance-plan.md`.
+
+Verification passed:
+- `node --check js/*.js`
+- `node scripts/first-bowl-regression.mjs`
+- `node scripts/game-regression.mjs`

@@ -69,6 +69,11 @@ export class CustomerManager {
         this.spawnCount = 0;
     }
 
+    isMobilePacing() {
+        if (typeof window === 'undefined') return false;
+        return window.matchMedia?.('(max-width: 680px)').matches || window.innerWidth <= 680;
+    }
+
     setDifficulty(preset) {
         this.difficulty = preset || DIFFICULTY_PRESETS.normal;
     }
@@ -96,7 +101,7 @@ export class CustomerManager {
         const typeData = CUSTOMER_TYPES[type];
         const menuId = options.menuId || earlyCustomer?.menuId || this.menuManager.getRandomMenu(typeData.allowedMenus || null);
         const customer = new Customer(type, menuId, seatIndex, {
-            patienceMultiplier: this.difficulty.patienceMultiplier,
+            patienceMultiplier: this.difficulty.patienceMultiplier * (this.isMobilePacing() ? 1.18 : 1),
         });
         this.seats[seatIndex] = customer;
         this.spawnCount++;
@@ -105,10 +110,12 @@ export class CustomerManager {
 
     /** 다음 고객 스폰 예약 */
     scheduleNextSpawn() {
-        const min = this.difficulty.spawnIntervalMin || GAME.SPAWN_INTERVAL_MIN;
-        const max = this.difficulty.spawnIntervalMax || GAME.SPAWN_INTERVAL_MAX;
+        const mobileMultiplier = this.isMobilePacing() ? 1.35 : 1;
+        const min = (this.difficulty.spawnIntervalMin || GAME.SPAWN_INTERVAL_MIN) * mobileMultiplier;
+        const max = (this.difficulty.spawnIntervalMax || GAME.SPAWN_INTERVAL_MAX) * mobileMultiplier;
+        const earlyBreather = this.spawnCount <= 3 ? 1.25 : 1;
         const delay = min + Math.random() * (max - min);
-        this.nextSpawnTime = Date.now() + delay;
+        this.nextSpawnTime = Date.now() + delay * earlyBreather;
     }
 
     /** 고객 유형 랜덤 선택 (가중치 기반) */
