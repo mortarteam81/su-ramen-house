@@ -97,3 +97,20 @@ Verification passed:
 - `node scripts/first-bowl-regression.mjs`
 - `node scripts/game-regression.mjs`
 - `_review/day-progression-capture.mjs` screenshot review for Day 2 intro: no serious issue.
+
+## 2026-04-28 Wave 10 Planning — Mobile Playability
+
+User approved Wave 10 goal: make `su-ramen-house` playable on mobile for Day 1 without discomfort.
+
+Delegation mode selected by user: real Telegram specialist-bot workflow, not internal isolated sub-agents.
+
+Plan written to `docs/mobile-playability-plan.md`.
+GitHub issue created: #24 `Wave 10: 모바일 첫날 플레이성 최적화`.
+
+Recommended role sequence:
+1. design / davinciavatar: mobile UX layout review/spec.
+2. worker / muskeron: CSS/JS implementation.
+3. reviewer / windmageranian: mobile QA/regression.
+4. Rel/main: final integration, commit/push, server for testing.
+
+Scope cap: mobile portrait browser playability for Day 1; no new gameplay systems, no new art, no full app/PWA work.
