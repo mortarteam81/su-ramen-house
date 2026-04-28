@@ -6,6 +6,7 @@ import { RECIPES, INGREDIENTS, CUSTOMER_TYPES } from './config.js';
 // 초기화
 const game = new Game();
 const ui = new UI();
+let previousPotStates = [];
 
 // ===== 화면 초기화 =====
 function initMenuScreen() {
@@ -99,6 +100,7 @@ document.querySelectorAll('.pot-container').forEach(potEl => {
             const result = game.tryServe(potIndex);
             if (result && !result.success) {
                 ui.showToast(result.reason, 'warning');
+                ui.setChefState('surprised', result.reason, { duration: 1000 });
                 ui.showServeFeedback({ success: false, message: result.reason, potId: potIndex });
                 potEl.classList.add('mismatch', 'shake');
                 setTimeout(() => potEl.classList.remove('mismatch', 'shake'), 600);
@@ -130,9 +132,11 @@ function handleConfirmCook(recipeId) {
     const result = game.confirmCook(recipeId);
     if (result && result.success) {
         ui.showToast(`${result.recipeName} 조리 시작! 🔥`, 'success');
+        ui.setChefState('cooking', `${result.recipeName} 끓이는 중!`, { duration: 1400 });
         ui.hideRecipeHint();
     } else if (result) {
         ui.showToast(result.reason, 'warning');
+        ui.setChefState('surprised', result.reason, { duration: 1000 });
     }
 }
 
@@ -141,6 +145,8 @@ function startNewGame({ replayFirstBowlGuide = false } = {}) {
     ui.applyCosmetics(game.getCosmetics());
     ui.showScreen('game');
     ui.resetSeats();
+    ui.resetChef();
+    previousPotStates = game.cooking.pots.map(pot => pot.state);
     ui.hideRecipeHint();
     ui.startFirstBowlGuide({ force: replayFirstBowlGuide });
 
@@ -152,8 +158,10 @@ function startNewGame({ replayFirstBowlGuide = false } = {}) {
         const result = game.addIngredient(ingredientId);
         if (result?.success && selectedPotBeforeAdd !== null) {
             ui.throwIngredientToPot(ingredientId, selectedPotBeforeAdd);
+            ui.setChefState(result.cooking ? 'cooking' : 'happy', result.cooking ? '불 올립니다!' : '좋아요, 다음 재료!', { duration: result.cooking ? 1200 : 650 });
         } else {
             ui.pulseIngredientButton(ingredientId);
+            ui.setChefState('surprised', '냄비부터 볼까요?', { duration: 900 });
         }
         if (!result) {
             ui.showToast('냄비를 먼저 선택하세요!', 'warning');
@@ -162,6 +170,7 @@ function startNewGame({ replayFirstBowlGuide = false } = {}) {
 
         if (!result.success) {
             ui.showToast(result.reason, 'error');
+            ui.setChefState('surprised', result.reason, { duration: 1100 });
             // 냄비 흔들림 애니메이션
             const selectedPot = game.cooking.selectedPot;
             if (selectedPot !== null) {
@@ -173,6 +182,7 @@ function startNewGame({ replayFirstBowlGuide = false } = {}) {
             }
         } else if (result.cooking) {
             ui.showToast(`${result.recipeName} 조리 시작! 🔥`, 'success');
+            ui.setChefState('cooking', `${result.recipeName} 끓이는 중!`, { duration: 1400 });
             ui.hideRecipeHint();
         } else {
             // 부분 매칭 - 힌트 표시 (확정 가능 레시피 포함)
@@ -186,6 +196,13 @@ function startNewGame({ replayFirstBowlGuide = false } = {}) {
 
     // 게임 콜백 설정
     game.onUpdate = (g) => {
+        g.cooking.pots.forEach((pot, index) => {
+            if (previousPotStates[index] === 'cooking' && pot.state === 'done') {
+                ui.setChefState('happy', '라면 완성! 서빙하세요!', { duration: 1100 });
+            }
+            previousPotStates[index] = pot.state;
+        });
+
         ui.updateHUD(g);
         ui.updatePots(g.cooking);
         ui.updateGuidance(g);
@@ -205,6 +222,7 @@ function startNewGame({ replayFirstBowlGuide = false } = {}) {
     };
 
     game.onCustomerLeave = (customer) => {
+        ui.setChefState('surprised', '손님이 화났어요!', { duration: 1200 });
         ui.removeCustomer(customer.seatIndex, true);
         ui.showToast(`😢 ${CUSTOMER_TYPES[customer.type].name}이(가) 떠났습니다!`, 'error');
     };
@@ -212,8 +230,10 @@ function startNewGame({ replayFirstBowlGuide = false } = {}) {
     game.onServeSuccess = (customer, reward, combo) => {
         if (game.served === 1) ui.completeFirstBowlGuide();
         ui.flashCustomerMatch(customer, 'success');
+        ui.playCustomerServedLifecycle(customer);
+        ui.setChefState(combo >= 2 ? 'combo' : 'happy', combo >= 2 ? `${combo}콤보, 좋아요!` : '서빙 성공!', { duration: 1200 });
         ui.showServeFeedback({ success: true, customer, reward });
-        setTimeout(() => ui.removeCustomer(customer.seatIndex, false), 500);
+        setTimeout(() => ui.removeCustomer(customer.seatIndex, false), 1250);
         ui.showToast(`✅ 서빙 성공! +${reward.total.toLocaleString()}원`, 'success');
 
         // 플로팅 머니
@@ -225,11 +245,13 @@ function startNewGame({ replayFirstBowlGuide = false } = {}) {
     };
 
     game.onCombo = (combo, bonus) => {
+        ui.setChefState('combo', `${combo}콤보 보너스!`, { duration: 1600 });
         ui.showToast(`🔥 ${combo} 콤보! +${bonus.toLocaleString()}원 보너스!`, 'combo');
         ui.showComboCelebration(combo, bonus);
     };
 
     game.onComboBreak = (combo, message) => {
+        ui.setChefState('surprised', '콤보가 끊겼어요!', { duration: 1100 });
         ui.showToast(`💔 ${combo} 콤보 종료`, 'warning');
         ui.showComboBreak(combo, message);
     };
@@ -340,11 +362,13 @@ function getGameDebugState() {
             bowl: document.getElementById('screen-game')?.dataset.bowlCosmetic || 'default',
         },
         selectedPot: game.cooking.selectedPot,
+        chef: ui.getChefVisualState(),
         customers: game.customers.seats.map((customer, seatIndex) => {
             if (!customer || customer.left) return null;
             const recipe = RECIPES[customer.menuId];
             const type = CUSTOMER_TYPES[customer.type];
             const seatEl = ui.counterSeats.children[seatIndex];
+            const visual = ui.getCustomerVisualState(customer);
             return {
                 id: customer.id,
                 seatIndex,
@@ -355,6 +379,9 @@ function getGameDebugState() {
                 recipe: recipe?.ingredients || [],
                 patienceRemaining: Number(customer.patienceRemaining.toFixed(3)),
                 served: customer.served,
+                visualState: visual.visualState,
+                lifecycleText: visual.lifecycleText,
+                domClasses: visual.classes,
                 visibleText: seatEl?.innerText.trim() || '',
             };
         }).filter(Boolean),

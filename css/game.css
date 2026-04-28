@@ -607,6 +607,64 @@
     animation: blink 0.5s infinite;
 }
 
+.customer-life-text {
+    align-self: stretch;
+    margin: -1px 0 2px;
+    padding: 2px 6px;
+    border-radius: var(--radius-full);
+    background: rgba(255, 213, 79, 0.18);
+    color: #7a3f12;
+    font-size: 9px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.customer-lifecycle-entering .customer-avatar {
+    animation: customerStepIn 0.55s ease forwards;
+}
+
+.customer-lifecycle-waiting .customer-avatar {
+    animation: customerWaiting 1.8s ease-in-out infinite;
+}
+
+.customer-lifecycle-eating .customer-bubble {
+    background: linear-gradient(180deg, #fffdf5, #e8f5e9);
+    border-color: #66bb6a;
+}
+
+.customer-lifecycle-eating .customer-avatar {
+    animation: customerEating 0.34s ease-in-out infinite;
+}
+
+.customer-lifecycle-paying .customer-bubble {
+    background: linear-gradient(180deg, #fff8df, #ffe6a3);
+    border-color: #ffd54f;
+}
+
+.customer-lifecycle-paying .customer-avatar::after {
+    content: '💰';
+    position: absolute;
+    right: -14px;
+    bottom: 3px;
+    font-size: 20px;
+    animation: coinPop 0.55s ease-in-out infinite;
+}
+
+.customer-lifecycle-leaving .customer-bubble,
+.customer-lifecycle-angry-leaving .customer-bubble {
+    transform-origin: bottom center;
+}
+
+.customer-lifecycle-angry-leaving .customer-bubble {
+    background: linear-gradient(180deg, #fff1f1, #ffd1d1);
+    border-color: #f44336;
+}
+
+.customer-lifecycle-angry-leaving .customer-life-text {
+    background: rgba(244, 67, 54, 0.16);
+    color: #9d1f16;
+}
+
 /* ===== 조리대 영역 ===== */
 .cooking-area {
     flex: 1;
@@ -620,6 +678,102 @@
         radial-gradient(ellipse at center bottom, rgba(255, 107, 53, 0.11) 0%, transparent 60%);
     position: relative;
     z-index: 1;
+}
+
+.chef-character {
+    position: absolute;
+    left: min(calc(100% - 150px), calc(50% + 300px));
+    bottom: 18px;
+    width: 128px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    pointer-events: none;
+    z-index: 0;
+    --chef-accent: var(--color-secondary);
+}
+
+.chef-speech {
+    max-width: 132px;
+    padding: 6px 9px;
+    border: 2px solid rgba(98, 51, 30, 0.9);
+    border-radius: var(--radius-md);
+    background: rgba(255, 248, 226, 0.96);
+    color: #4b2518;
+    box-shadow: var(--shadow-sm);
+    font-size: 11px;
+    line-height: 1.25;
+    text-align: center;
+}
+
+.chef-body {
+    position: relative;
+    width: 82px;
+    height: 92px;
+    border: 3px solid #f7e1c1;
+    border-radius: 28px 28px 20px 20px;
+    background:
+        radial-gradient(circle at 50% 24%, #ffe1bd 0 18px, transparent 19px),
+        linear-gradient(180deg, #fff7ec 0 46%, #e9d2bd 46% 100%);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.28), inset 0 -10px 0 rgba(96, 54, 38, 0.08);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 7px;
+}
+
+.chef-hat {
+    font-size: 40px;
+    line-height: 1;
+    filter: drop-shadow(0 2px 1px rgba(0, 0, 0, 0.18));
+}
+
+.chef-tool,
+.chef-spark {
+    position: absolute;
+    font-size: 24px;
+}
+
+.chef-tool {
+    right: -13px;
+    top: 42px;
+    transform-origin: 20% 80%;
+}
+
+.chef-spark {
+    left: -14px;
+    top: 18px;
+    opacity: 0;
+}
+
+.chef-idle .chef-body {
+    animation: chefBreathe 2.2s ease-in-out infinite;
+}
+
+.chef-cooking .chef-body,
+.chef-cooking .chef-tool {
+    animation: chefCook 0.48s ease-in-out infinite;
+}
+
+.chef-happy .chef-body {
+    animation: chefHappy 0.65s ease;
+}
+
+.chef-happy .chef-spark,
+.chef-combo .chef-spark {
+    opacity: 1;
+    animation: chefSpark 0.75s ease-in-out infinite;
+}
+
+.chef-surprised .chef-body {
+    animation: chefSurprised 0.55s ease;
+}
+
+.chef-combo .chef-body {
+    border-color: #ffd54f;
+    box-shadow: 0 0 0 5px rgba(255, 213, 79, 0.16), 0 0 28px rgba(255, 138, 101, 0.58), var(--shadow-md);
+    animation: chefCombo 0.55s ease-in-out infinite;
 }
 
 .pot-container {
@@ -1233,6 +1387,7 @@
         padding: 5px 6px;
     }
 
+    .customer-life-text { font-size: 8px; padding: 1px 5px; }
     .bubble-text { font-size: 10px; }
     .bubble-recipe { font-size: 13px; padding: 2px 5px; }
     .customer-avatar { width: 54px; height: 54px; }
@@ -1247,6 +1402,30 @@
         padding: 10px 8px;
         align-items: center;
     }
+
+    .chef-character {
+        left: 8px;
+        bottom: 6px;
+        width: 88px;
+        opacity: 0.92;
+    }
+
+    .chef-speech {
+        max-width: 92px;
+        padding: 4px 6px;
+        font-size: 9px;
+    }
+
+    .chef-body {
+        width: 56px;
+        height: 64px;
+        border-width: 2px;
+        padding-top: 4px;
+    }
+
+    .chef-hat { font-size: 29px; }
+    .chef-tool { right: -10px; top: 29px; font-size: 18px; }
+    .chef-spark { left: -10px; top: 12px; font-size: 17px; }
 
     .pot-container {
         width: min(45vw, 170px);
@@ -1385,6 +1564,16 @@
         min-height: 140px;
         padding: 8px 6px;
     }
+
+    .chef-character {
+        left: 4px;
+        bottom: 3px;
+        transform: scale(0.82);
+        transform-origin: left bottom;
+        opacity: 0.72;
+    }
+
+    .chef-speech { display: none; }
 
     .pot-container {
         width: calc(50vw - 14px);

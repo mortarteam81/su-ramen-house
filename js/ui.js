@@ -56,6 +56,9 @@ export class UI {
         this.ingredientShelf = document.getElementById('ingredient-shelf');
         this.recipeHint = document.getElementById('recipe-hint');
         this.recipeHintContent = document.getElementById('recipe-hint-content');
+        this.chef = document.getElementById('chef-character');
+        this.chefSpeech = document.getElementById('chef-speech');
+        this.chefStateTimer = null;
 
         // 첫 그릇 가이드
         this.firstBowlGuide = document.getElementById('first-bowl-guide');
@@ -214,6 +217,51 @@ export class UI {
             this.hud.dayLabel.textContent = `Day ${game.currentDay.day} · ${game.currentDay.title}`;
             this.hud.dayGoal.textContent = `${game.served}/${game.currentDay.goalServed} ${game.currentDay.goalText}`;
         }
+    }
+
+    // ===== 요리사 캐릭터 =====
+    setChefState(state = 'idle', message = '', { duration = 900 } = {}) {
+        if (!this.chef) return;
+        const allowed = ['idle', 'cooking', 'happy', 'surprised', 'combo'];
+        const nextState = allowed.includes(state) ? state : 'idle';
+        this.chef.classList.remove(...allowed.map(name => `chef-${name}`));
+        this.chef.classList.add(`chef-${nextState}`);
+        this.chef.dataset.chefState = nextState;
+        if (this.chefSpeech) {
+            this.chefSpeech.textContent = message || this.getChefMessage(nextState);
+        }
+
+        if (this.chefStateTimer) clearTimeout(this.chefStateTimer);
+        if (nextState !== 'idle' && duration > 0) {
+            this.chefStateTimer = setTimeout(() => {
+                this.setChefState('idle', '', { duration: 0 });
+            }, duration);
+        }
+    }
+
+    getChefMessage(state) {
+        const messages = {
+            idle: '어서 오세요!',
+            cooking: '보글보글 끓는 중!',
+            happy: '맛있게 됐어요!',
+            surprised: '앗, 다시 해볼까요?',
+            combo: '콤보 최고!',
+        };
+        return messages[state] || messages.idle;
+    }
+
+    resetChef() {
+        if (this.chefStateTimer) clearTimeout(this.chefStateTimer);
+        this.chefStateTimer = null;
+        this.setChefState('idle', '어서 오세요!', { duration: 0 });
+    }
+
+    getChefVisualState() {
+        return {
+            state: this.chef?.dataset.chefState || 'idle',
+            text: this.chefSpeech?.textContent || '',
+            classes: this.chef?.className || '',
+        };
     }
 
     // ===== 메인 메뉴 =====
@@ -567,9 +615,10 @@ export class UI {
         };
 
         seatEl.innerHTML = `
-      <div class="customer customer-enter customer-type-${customer.type}" data-customer-id="${customer.id}" data-customer-type="${customer.type}" style="--customer-color:${typeData.color}; --customer-tone:${styleDetail.tone}">
+      <div class="customer customer-enter customer-lifecycle-entering customer-type-${customer.type}" data-customer-id="${customer.id}" data-customer-type="${customer.type}" data-visual-state="entering" style="--customer-color:${typeData.color}; --customer-tone:${styleDetail.tone}">
         <div class="customer-bubble">
           <div class="customer-type-badge">${styleDetail.badge}</div>
+          <div class="customer-life-text">입장 중 · 자리 찾는 중</div>
           <div class="bubble-title">
             <span class="bubble-emoji">${recipe?.emoji || '🍜'}</span>
             <span class="bubble-text">${recipe?.name || '라면'}</span>
@@ -591,13 +640,56 @@ export class UI {
         // 등장 애니메이션 해제
         setTimeout(() => {
             const customerEl = seatEl.querySelector('.customer');
-            if (customerEl) customerEl.classList.remove('customer-enter');
-        }, 50);
+            if (customerEl) {
+                customerEl.classList.remove('customer-enter');
+                this.setCustomerLifecycle(customer, 'waiting', '주문하고 기다리는 중');
+            }
+        }, 120);
     }
 
     getCustomerEl(customer) {
         const seatEl = this.counterSeats.children[customer.seatIndex];
         return seatEl?.querySelector(`[data-customer-id="${customer.id}"]`) || null;
+    }
+
+    setCustomerLifecycle(customer, state, text = '') {
+        const customerEl = this.getCustomerEl(customer);
+        if (!customerEl) return;
+        const lifecycleStates = ['entering', 'waiting', 'eating', 'paying', 'leaving', 'angry-leaving'];
+        customerEl.classList.remove(...lifecycleStates.map(name => `customer-lifecycle-${name}`));
+        if (lifecycleStates.includes(state)) {
+            customerEl.classList.add(`customer-lifecycle-${state}`);
+            customerEl.dataset.visualState = state;
+        }
+        const lifeText = customerEl.querySelector('.customer-life-text');
+        if (lifeText) lifeText.textContent = text || this.getCustomerLifecycleText(state);
+    }
+
+    getCustomerLifecycleText(state) {
+        const texts = {
+            entering: '입장 중 · 자리 찾는 중',
+            waiting: '주문하고 기다리는 중',
+            eating: '후루룩! 식사 중',
+            paying: '계산 중 · 동전 짤랑',
+            leaving: '만족하고 퇴장',
+            'angry-leaving': '화나서 퇴장',
+        };
+        return texts[state] || '';
+    }
+
+    playCustomerServedLifecycle(customer) {
+        this.setCustomerLifecycle(customer, 'eating', '후루룩! 맛있어요');
+        setTimeout(() => this.setCustomerLifecycle(customer, 'paying', '계산할게요 💰'), 420);
+        setTimeout(() => this.setCustomerLifecycle(customer, 'leaving', '잘 먹었습니다!'), 820);
+    }
+
+    getCustomerVisualState(customer) {
+        const customerEl = this.getCustomerEl(customer);
+        return {
+            visualState: customerEl?.dataset.visualState || null,
+            lifecycleText: customerEl?.querySelector('.customer-life-text')?.textContent || '',
+            classes: customerEl?.className || '',
+        };
     }
 
     flashCustomerMatch(customer, type = 'success') {
@@ -634,10 +726,14 @@ export class UI {
 
         const customerEl = seatEl.querySelector('.customer');
         if (customerEl) {
+            const fakeCustomer = { id: Number(customerEl.dataset.customerId), seatIndex };
+            this.setCustomerLifecycle(fakeCustomer, isAngry ? 'angry-leaving' : 'leaving');
             customerEl.classList.add(isAngry ? 'customer-angry' : 'customer-happy');
             setTimeout(() => {
                 seatEl.innerHTML = '<div class="seat-empty">빈자리</div>';
-            }, 600);
+            }, isAngry ? 650 : 520);
+        } else {
+            seatEl.innerHTML = '<div class="seat-empty">빈자리</div>';
         }
     }
 
