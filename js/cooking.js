@@ -219,6 +219,7 @@ export class CookingStation {
 
         const recipeId = pot.targetRecipe;
         this.resetPot(potId);
+        this.deselectPot();
         return { success: true, recipeId };
     }
 

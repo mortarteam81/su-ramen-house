@@ -50,6 +50,116 @@
     margin-left: auto;
 }
 
+/* ===== 첫 그릇 가이드 ===== */
+.first-bowl-guide {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-lg);
+    padding: var(--space-sm) var(--space-lg);
+    background: linear-gradient(90deg, rgba(255, 213, 79, 0.14), rgba(255, 138, 101, 0.13));
+    border-bottom: 2px solid rgba(255, 213, 79, 0.28);
+    color: var(--color-text);
+    flex-shrink: 0;
+    z-index: 9;
+}
+
+.first-guide-main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+}
+
+.first-guide-title {
+    font-weight: bold;
+    color: var(--color-secondary);
+    white-space: nowrap;
+}
+
+.first-guide-summary {
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    background: rgba(0, 0, 0, 0.18);
+    font-size: 13px;
+    color: white;
+}
+
+.first-guide-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    flex-wrap: wrap;
+    font-size: 12px;
+}
+
+.first-guide-step {
+    padding: 4px 8px;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--color-text-dim);
+    white-space: nowrap;
+}
+
+.first-guide-step.done {
+    background: rgba(102, 187, 106, 0.22);
+    border-color: rgba(102, 187, 106, 0.45);
+    color: var(--color-success);
+}
+
+.first-guide-step.active {
+    background: var(--color-secondary);
+    border-color: var(--color-secondary);
+    color: #2a1f24;
+    font-weight: bold;
+    box-shadow: 0 0 14px rgba(255, 213, 79, 0.35);
+}
+
+.first-guide-arrow {
+    color: var(--color-text-muted);
+}
+
+.first-guide-actions {
+    display: flex;
+    gap: var(--space-xs);
+    margin-left: auto;
+}
+
+.btn-guide-control {
+    padding: 5px 9px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: var(--radius-sm);
+    background: rgba(0, 0, 0, 0.16);
+    color: var(--color-text-dim);
+    font-family: var(--font-main);
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.btn-guide-control:hover {
+    color: white;
+    border-color: var(--color-secondary);
+}
+
+.first-bowl-guide.minimized {
+    justify-content: center;
+    cursor: pointer;
+}
+
+.first-bowl-guide.minimized .first-guide-steps,
+.first-bowl-guide.minimized .first-guide-actions {
+    display: none;
+}
+
+.first-bowl-guide.minimized .first-guide-summary::after {
+    content: ' · 클릭해서 펼치기';
+    color: var(--color-text-muted);
+}
+
 /* ===== 카운터 영역 (고객석) ===== */
 .counter-area {
     flex-shrink: 0;

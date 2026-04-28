@@ -299,6 +299,17 @@ html, body {
   margin: 0 auto;
 }
 
+.howto-actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.howto-actions .btn {
+  margin: 0;
+}
+
 /* ===== 상점 화면 ===== */
 .shop-container {
   max-width: 700px;

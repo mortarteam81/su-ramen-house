@@ -32,6 +32,24 @@ document.getElementById('btn-howto-back').addEventListener('click', () => {
     ui.showScreen('menu');
 });
 
+document.getElementById('btn-replay-guide').addEventListener('click', () => {
+    startNewGame({ replayFirstBowlGuide: true });
+});
+
+document.getElementById('btn-first-guide-minimize').addEventListener('click', (e) => {
+    e.stopPropagation();
+    ui.minimizeFirstBowlGuide();
+});
+
+document.getElementById('btn-first-guide-dismiss').addEventListener('click', (e) => {
+    e.stopPropagation();
+    ui.dismissFirstBowlGuide();
+});
+
+document.getElementById('first-bowl-guide').addEventListener('click', () => {
+    ui.expandFirstBowlGuide();
+});
+
 // 상점
 document.getElementById('btn-shop-back').addEventListener('click', () => {
     if (game.state === GAME_STATE.PAUSED) {
@@ -117,10 +135,11 @@ function handleConfirmCook(recipeId) {
 }
 
 // ===== 게임 시작 =====
-function startNewGame() {
+function startNewGame({ replayFirstBowlGuide = false } = {}) {
     ui.showScreen('game');
     ui.resetSeats();
     ui.hideRecipeHint();
+    ui.startFirstBowlGuide({ force: replayFirstBowlGuide });
 
     // 재료 선반 생성
     ui.createIngredientShelf((ingredientId) => {
@@ -161,6 +180,7 @@ function startNewGame() {
         ui.updateHUD(g);
         ui.updatePots(g.cooking);
         ui.updateGuidance(g);
+        ui.updateFirstBowlGuide(g);
 
         // 고객 인내심 업데이트
         for (const customer of g.customers.seats) {
@@ -181,6 +201,7 @@ function startNewGame() {
     };
 
     game.onServeSuccess = (customer, reward, combo) => {
+        if (game.served === 1) ui.completeFirstBowlGuide();
         ui.flashCustomerMatch(customer, 'success');
         setTimeout(() => ui.removeCustomer(customer.seatIndex, false), 350);
         ui.showToast(`✅ 서빙 성공! +${reward.total.toLocaleString()}원`, 'success');
@@ -234,6 +255,67 @@ function openShop() {
     ui.updateShop(game.menuManager, game.money, handleUnlock);
     ui.showScreen('shop');
 }
+
+// ===== 테스트/디버그 상태 출력 =====
+function getVisibleText(selector) {
+    const el = document.querySelector(selector);
+    return el ? el.innerText.trim() : '';
+}
+
+function getGameDebugState() {
+    const activeScreen = document.querySelector('.screen.active')?.id || null;
+    return {
+        activeScreen,
+        state: game.state,
+        money: game.money,
+        served: game.served,
+        lives: game.lives,
+        combo: game.combo,
+        selectedPot: game.cooking.selectedPot,
+        customers: game.customers.seats.map((customer, seatIndex) => {
+            if (!customer || customer.left) return null;
+            const recipe = RECIPES[customer.menuId];
+            const type = CUSTOMER_TYPES[customer.type];
+            const seatEl = ui.counterSeats.children[seatIndex];
+            return {
+                id: customer.id,
+                seatIndex,
+                type: customer.type,
+                typeName: type?.name || customer.type,
+                menuId: customer.menuId,
+                menuName: recipe?.name || customer.menuId,
+                recipe: recipe?.ingredients || [],
+                patienceRemaining: Number(customer.patienceRemaining.toFixed(3)),
+                served: customer.served,
+                visibleText: seatEl?.innerText.trim() || '',
+            };
+        }).filter(Boolean),
+        pots: game.cooking.pots.map((pot) => ({
+            id: pot.id,
+            state: pot.state,
+            targetRecipe: pot.targetRecipe,
+            addedIngredients: [...pot.addedIngredients],
+            cookProgress: Number(pot.cookProgress.toFixed(3)),
+            visibleText: document.getElementById(`pot-${pot.id}`)?.innerText.trim() || '',
+        })),
+        guidance: {
+            firstBowlGuideVisible: ui.firstBowlGuide?.style.display !== 'none',
+            firstBowlGuideText: ui.firstBowlGuide?.innerText.trim() || '',
+            guideTargets: Array.from(document.querySelectorAll('.guide-target, .serve-guide, .customer-guide'))
+                .map((el) => el.id || el.dataset.ingredient || el.className || el.tagName),
+            recipeHintText: ui.recipeHint?.style.display === 'none' ? '' : ui.recipeHint?.innerText.trim() || '',
+        },
+        hud: {
+            money: getVisibleText('#hud-money'),
+            served: getVisibleText('#hud-served'),
+            lives: getVisibleText('#hud-lives'),
+            combo: getVisibleText('#hud-combo'),
+        },
+    };
+}
+
+window.get_game_debug_state = getGameDebugState;
+window.render_game_to_text = () => JSON.stringify(getGameDebugState(), null, 2);
 
 // ===== 초기 실행 =====
 initMenuScreen();

@@ -2,6 +2,17 @@
 import { INGREDIENTS, RECIPES, CUSTOMER_TYPES } from './config.js';
 import { POT_STATE } from './cooking.js';
 
+const FIRST_BOWL_GUIDE_KEY = 'ramen_shop_first_bowl_guide_hidden';
+const FIRST_BOWL_GUIDE_STEPS = ['pot', 'water', 'noodle', 'soup', 'cook', 'serve'];
+const FIRST_BOWL_GUIDE_MESSAGES = {
+    pot: '빈 냄비를 먼저 선택하세요',
+    water: '물 💧을 넣으세요',
+    noodle: '면 🍜을 넣으세요',
+    soup: '스프 🧂를 넣으세요',
+    cook: '레시피 힌트에서 조리 시작을 누르세요',
+    serve: '완성된 라면을 서빙하세요',
+};
+
 export class UI {
     constructor() {
         // 화면 요소
@@ -35,6 +46,12 @@ export class UI {
         this.recipeHint = document.getElementById('recipe-hint');
         this.recipeHintContent = document.getElementById('recipe-hint-content');
 
+        // 첫 그릇 가이드
+        this.firstBowlGuide = document.getElementById('first-bowl-guide');
+        this.firstGuideSummary = document.getElementById('first-guide-summary');
+        this.firstGuideActive = false;
+        this.firstGuideMinimized = false;
+
         // 오버레이
         this.pauseOverlay = document.getElementById('overlay-pause');
 
@@ -45,6 +62,91 @@ export class UI {
 
         // 토스트
         this.toastContainer = document.getElementById('toast-container');
+    }
+
+    // ===== 첫 그릇 가이드 =====
+    isFirstBowlGuideHidden() {
+        try {
+            return localStorage.getItem(FIRST_BOWL_GUIDE_KEY) === '1';
+        } catch {
+            return false;
+        }
+    }
+
+    startFirstBowlGuide({ force = false } = {}) {
+        this.firstGuideActive = force || !this.isFirstBowlGuideHidden();
+        this.firstGuideMinimized = false;
+        if (!this.firstBowlGuide) return;
+        this.firstBowlGuide.classList.remove('minimized');
+        this.firstBowlGuide.style.display = this.firstGuideActive ? 'flex' : 'none';
+    }
+
+    minimizeFirstBowlGuide() {
+        if (!this.firstBowlGuide || !this.firstGuideActive) return;
+        this.firstGuideMinimized = true;
+        this.firstBowlGuide.classList.add('minimized');
+    }
+
+    expandFirstBowlGuide() {
+        if (!this.firstBowlGuide || !this.firstGuideActive) return;
+        this.firstGuideMinimized = false;
+        this.firstBowlGuide.classList.remove('minimized');
+    }
+
+    dismissFirstBowlGuide() {
+        this.firstGuideActive = false;
+        try {
+            localStorage.setItem(FIRST_BOWL_GUIDE_KEY, '1');
+        } catch {
+            // 저장소를 사용할 수 없어도 현재 게임에서는 닫는다.
+        }
+        if (this.firstBowlGuide) this.firstBowlGuide.style.display = 'none';
+    }
+
+    completeFirstBowlGuide() {
+        this.firstGuideActive = false;
+        if (this.firstBowlGuide) this.firstBowlGuide.style.display = 'none';
+    }
+
+    getFirstBowlGuideStep(game) {
+        if (game.cooking.selectedPot === null) return 'pot';
+
+        const pot = game.cooking.getSelectedPot();
+        if (!pot) return 'pot';
+        if (pot.state === POT_STATE.DONE) return 'serve';
+        if (pot.state === POT_STATE.COOKING) return 'cook';
+
+        if (pot.state === POT_STATE.EMPTY) return 'water';
+        if (pot.state === POT_STATE.FILLING) {
+            if (pot.addedIngredients.length === 0) return 'water';
+            if (pot.addedIngredients.length === 1) return 'noodle';
+            if (pot.addedIngredients.length === 2) return 'soup';
+            return 'cook';
+        }
+
+        return 'pot';
+    }
+
+    updateFirstBowlGuide(game) {
+        if (!this.firstBowlGuide || !this.firstGuideActive) return;
+        if (game.served > 0 || game.state !== 'playing') {
+            this.completeFirstBowlGuide();
+            return;
+        }
+
+        const activeStep = this.getFirstBowlGuideStep(game);
+        const activeIndex = FIRST_BOWL_GUIDE_STEPS.indexOf(activeStep);
+        this.firstBowlGuide.style.display = 'flex';
+        if (this.firstGuideSummary) {
+            this.firstGuideSummary.textContent = FIRST_BOWL_GUIDE_MESSAGES[activeStep] || '첫 그릇을 따라 만들어 보세요';
+        }
+
+        this.firstBowlGuide.querySelectorAll('.first-guide-step').forEach(stepEl => {
+            const step = stepEl.dataset.guideStep;
+            const stepIndex = FIRST_BOWL_GUIDE_STEPS.indexOf(step);
+            stepEl.classList.toggle('active', step === activeStep);
+            stepEl.classList.toggle('done', stepIndex >= 0 && stepIndex < activeIndex);
+        });
     }
 
     // ===== 화면 전환 =====

@@ -67,7 +67,10 @@
           <li>💰 돈을 모아 새 메뉴를 해금하세요!</li>
         </ul>
       </div>
-      <button id="btn-howto-back" class="btn btn-primary">🔙 돌아가기</button>
+      <div class="howto-actions">
+        <button id="btn-replay-guide" class="btn btn-secondary">👣 첫 그릇 가이드 다시 보기</button>
+        <button id="btn-howto-back" class="btn btn-primary">🔙 돌아가기</button>
+      </div>
     </div>
   </section>
 
@@ -103,6 +106,31 @@
         <span id="hud-lives">❤️❤️❤️</span>
       </div>
       <button id="btn-pause" class="btn btn-small">⏸️</button>
+    </div>
+
+    <!-- 첫 그릇 가이드 -->
+    <div class="first-bowl-guide" id="first-bowl-guide" style="display:none;">
+      <div class="first-guide-main">
+        <div class="first-guide-title">👣 첫 그릇 가이드</div>
+        <div class="first-guide-summary" id="first-guide-summary">냄비를 선택하세요</div>
+        <div class="first-guide-steps" id="first-guide-steps" aria-label="첫 그릇 조리 단계">
+          <span class="first-guide-step" data-guide-step="pot">냄비 선택</span>
+          <span class="first-guide-arrow">→</span>
+          <span class="first-guide-step" data-guide-step="water">물</span>
+          <span class="first-guide-arrow">→</span>
+          <span class="first-guide-step" data-guide-step="noodle">면</span>
+          <span class="first-guide-arrow">→</span>
+          <span class="first-guide-step" data-guide-step="soup">스프</span>
+          <span class="first-guide-arrow">→</span>
+          <span class="first-guide-step" data-guide-step="cook">조리 시작</span>
+          <span class="first-guide-arrow">→</span>
+          <span class="first-guide-step" data-guide-step="serve">서빙</span>
+        </div>
+      </div>
+      <div class="first-guide-actions">
+        <button id="btn-first-guide-minimize" class="btn-guide-control">작게 보기</button>
+        <button id="btn-first-guide-dismiss" class="btn-guide-control">다시 보지 않기</button>
+      </div>
     </div>
 
     <!-- 고객 카운터 -->
