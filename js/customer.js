@@ -71,8 +71,23 @@ export class CustomerManager {
     start() {
         this.seats.fill(null);
         this.spawnEnabled = true;
-        this.scheduleNextSpawn();
         customerIdCounter = 0;
+        const firstCustomer = this.spawnCustomer({ type: 'child', menuId: 'basic' });
+        this.scheduleNextSpawn();
+        return firstCustomer;
+    }
+
+    /** 즉시 고객 추가 */
+    spawnCustomer(options = {}) {
+        const seatIndex = this.findEmptySeat();
+        if (seatIndex === -1) return null;
+
+        const type = options.type || this.pickRandomType();
+        const typeData = CUSTOMER_TYPES[type];
+        const menuId = options.menuId || this.menuManager.getRandomMenu(typeData.allowedMenus || null);
+        const customer = new Customer(type, menuId, seatIndex);
+        this.seats[seatIndex] = customer;
+        return customer;
     }
 
     /** 다음 고객 스폰 예약 */
@@ -104,23 +119,12 @@ export class CustomerManager {
     }
 
     /** 매 프레임 업데이트 */
-    update() {
+    update({ allowSpawn = true } = {}) {
         const results = { spawned: null, left: [] };
 
         // 고객 스폰 체크
-        if (this.spawnEnabled && Date.now() >= this.nextSpawnTime) {
-            const seatIndex = this.findEmptySeat();
-            if (seatIndex !== -1) {
-                const type = this.pickRandomType();
-                const typeData = CUSTOMER_TYPES[type];
-
-                // 고객 유형에 따른 메뉴 제한
-                const menuId = this.menuManager.getRandomMenu(typeData.allowedMenus || null);
-
-                const customer = new Customer(type, menuId, seatIndex);
-                this.seats[seatIndex] = customer;
-                results.spawned = customer;
-            }
+        if (allowSpawn && this.spawnEnabled && Date.now() >= this.nextSpawnTime) {
+            results.spawned = this.spawnCustomer();
             this.scheduleNextSpawn();
         }
 

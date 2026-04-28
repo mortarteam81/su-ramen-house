@@ -80,6 +80,8 @@ document.querySelectorAll('.pot-container').forEach(potEl => {
             const result = game.tryServe(potIndex);
             if (result && !result.success) {
                 ui.showToast(result.reason, 'warning');
+                potEl.classList.add('mismatch', 'shake');
+                setTimeout(() => potEl.classList.remove('mismatch', 'shake'), 600);
             }
             return;
         }
@@ -158,6 +160,7 @@ function startNewGame() {
     game.onUpdate = (g) => {
         ui.updateHUD(g);
         ui.updatePots(g.cooking);
+        ui.updateGuidance(g);
 
         // 고객 인내심 업데이트
         for (const customer of g.customers.seats) {
@@ -178,7 +181,8 @@ function startNewGame() {
     };
 
     game.onServeSuccess = (customer, reward, combo) => {
-        ui.removeCustomer(customer.seatIndex, false);
+        ui.flashCustomerMatch(customer, 'success');
+        setTimeout(() => ui.removeCustomer(customer.seatIndex, false), 350);
         ui.showToast(`✅ 서빙 성공! +${reward.total.toLocaleString()}원`, 'success');
 
         // 플로팅 머니

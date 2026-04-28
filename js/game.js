@@ -55,7 +55,10 @@ export class Game {
         this.sessionMoney = 0;
 
         this.cooking.resetAll();
-        this.customers.start();
+        const firstCustomer = this.customers.start();
+        if (firstCustomer && this.onCustomerSpawn) {
+            this.onCustomerSpawn(firstCustomer);
+        }
 
         this._lastTime = Date.now();
         this._gameLoop();
@@ -69,7 +72,8 @@ export class Game {
         this.cooking.update();
 
         // 고객 업데이트
-        const customerResult = this.customers.update();
+        // 첫 라면을 완성하기 전에는 추가 손님을 막아 초반 목표를 흐리지 않는다.
+        const customerResult = this.customers.update({ allowSpawn: this.served > 0 });
 
         // 새 고객 등장
         if (customerResult.spawned && this.onCustomerSpawn) {
@@ -121,6 +125,11 @@ export class Game {
             this.sessionMoney += reward.total;
             this.served++;
             this.combo++;
+
+            // 첫 그릇 성공 후에만 다음 손님 스폰 타이머를 다시 시작한다.
+            if (this.served === 1) {
+                this.customers.scheduleNextSpawn();
+            }
 
             if (this.combo > this.maxCombo) this.maxCombo = this.combo;
 

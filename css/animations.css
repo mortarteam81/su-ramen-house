@@ -61,6 +61,37 @@
     }
 }
 
+/* -- 다음 행동 안내 펄스 -- */
+@keyframes guidePulse {
+    0%,
+    100% {
+        filter: brightness(1);
+    }
+
+    50% {
+        filter: brightness(1.18);
+    }
+}
+
+/* -- 서빙 매칭 피드백 -- */
+.match-success .customer-avatar,
+.match-success .customer-bubble {
+    animation: matchSuccess 0.5s ease;
+}
+
+@keyframes matchSuccess {
+    0%, 100% {
+        box-shadow: var(--shadow-sm);
+        transform: scale(1);
+    }
+
+    50% {
+        box-shadow: 0 0 0 6px rgba(102, 187, 106, 0.28), 0 0 28px rgba(102, 187, 106, 0.7);
+        transform: scale(1.12);
+        background-color: #E8F5E9;
+    }
+}
+
 /* -- 빛 반짝 (완성된 냄비) -- */
 @keyframes glowPulse {
 

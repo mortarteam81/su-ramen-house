@@ -95,6 +95,65 @@ export class UI {
         }
     }
 
+    getActiveCustomers(game) {
+        return game.customers.seats.filter(customer => customer && !customer.served && !customer.left);
+    }
+
+    findGuideCustomer(game) {
+        const active = this.getActiveCustomers(game);
+        return active[0] || null;
+    }
+
+    getNextIngredientForGuide(game) {
+        const pot = game.cooking.getSelectedPot();
+        if (!pot || (pot.state !== POT_STATE.EMPTY && pot.state !== POT_STATE.FILLING)) return null;
+
+        const guideCustomer = this.findGuideCustomer(game);
+        const recipe = guideCustomer ? RECIPES[guideCustomer.menuId] : RECIPES.basic;
+        if (!recipe) return null;
+
+        for (let i = 0; i < pot.addedIngredients.length; i++) {
+            if (pot.addedIngredients[i] !== recipe.ingredients[i]) return null;
+        }
+        return recipe.ingredients[pot.addedIngredients.length] || null;
+    }
+
+    updateGuidance(game) {
+        document.querySelectorAll('.guide-target, .serve-guide, .customer-guide').forEach(el => {
+            el.classList.remove('guide-target', 'serve-guide', 'customer-guide');
+        });
+
+        if (game.state !== 'playing') return;
+        const guideCustomer = this.findGuideCustomer(game);
+        if (!guideCustomer) return;
+
+        if (game.cooking.selectedPot === null) {
+            const firstEmpty = game.cooking.pots.find(pot => pot.state === POT_STATE.EMPTY);
+            if (firstEmpty) document.getElementById(`pot-${firstEmpty.id}`)?.classList.add('guide-target');
+            return;
+        }
+
+        const selectedPot = game.cooking.getSelectedPot();
+        if (!selectedPot) return;
+
+        if (selectedPot.state === POT_STATE.DONE) {
+            const matchingCustomer = game.customers.findCustomerForRecipe(selectedPot.targetRecipe);
+            const potEl = document.getElementById(`pot-${selectedPot.id}`);
+            if (matchingCustomer) {
+                potEl?.querySelector('.btn-serve')?.classList.add('serve-guide');
+                this.getCustomerEl(matchingCustomer)?.classList.add('customer-guide');
+            }
+            return;
+        }
+
+        const nextIngredient = this.getNextIngredientForGuide(game);
+        if (nextIngredient) {
+            this.ingredientShelf
+                .querySelector(`[data-ingredient="${nextIngredient}"]`)
+                ?.classList.add('guide-target');
+        }
+    }
+
     // ===== 냄비 UI 업데이트 =====
     updatePots(cookingStation) {
         for (let i = 0; i < cookingStation.pots.length; i++) {
@@ -173,17 +232,19 @@ export class UI {
 
         // 지금 바로 조리 가능한 레시피 (확정 버튼 포함)
         if (confirmableRecipes && confirmableRecipes.length > 0) {
-            for (const id of confirmableRecipes) {
+            confirmableRecipes.forEach((id, index) => {
                 const r = RECIPES[id];
                 const btn = document.createElement('button');
-                btn.className = 'btn-confirm-cook';
-                btn.innerHTML = `🔥 ${r.emoji} ${r.name} 조리 시작!`;
+                btn.className = `btn-confirm-cook ${index === 0 ? 'primary-cta' : 'secondary-cta'}`;
+                btn.innerHTML = index === 0
+                    ? `🔥 ${r.name} 조리 시작`
+                    : `${r.emoji} ${r.name}도 가능`;
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     if (onConfirmCook) onConfirmCook(id);
                 });
                 this.recipeHintContent.appendChild(btn);
-            }
+            });
         }
 
         // 재료를 더 넣으면 만들 수 있는 레시피
@@ -211,11 +272,18 @@ export class UI {
         const recipe = RECIPES[customer.menuId];
         const typeData = CUSTOMER_TYPES[customer.type];
 
+        const recipeIcons = recipe?.ingredients
+            .map(id => `<span class="recipe-icon">${INGREDIENTS[id]?.emoji || '?'}</span>`)
+            .join('<span class="recipe-arrow">→</span>') || '';
+
         seatEl.innerHTML = `
       <div class="customer customer-enter" data-customer-id="${customer.id}">
         <div class="customer-bubble">
-          <span class="bubble-emoji">${recipe?.emoji || '🍜'}</span>
-          <span class="bubble-text">${recipe?.name || '라면'}</span>
+          <div class="bubble-title">
+            <span class="bubble-emoji">${recipe?.emoji || '🍜'}</span>
+            <span class="bubble-text">${recipe?.name || '라면'}</span>
+          </div>
+          <div class="bubble-recipe" aria-label="레시피 순서">${recipeIcons}</div>
         </div>
         <div class="customer-avatar" style="background-color: ${typeData.color}20; border-color: ${typeData.color}">
           <span class="customer-emoji">${typeData.emoji}</span>
@@ -232,6 +300,18 @@ export class UI {
             const customerEl = seatEl.querySelector('.customer');
             if (customerEl) customerEl.classList.remove('customer-enter');
         }, 50);
+    }
+
+    getCustomerEl(customer) {
+        const seatEl = this.counterSeats.children[customer.seatIndex];
+        return seatEl?.querySelector(`[data-customer-id="${customer.id}"]`) || null;
+    }
+
+    flashCustomerMatch(customer, type = 'success') {
+        const customerEl = this.getCustomerEl(customer);
+        if (!customerEl) return;
+        customerEl.classList.add(type === 'success' ? 'match-success' : 'match-fail');
+        setTimeout(() => customerEl.classList.remove('match-success', 'match-fail'), 500);
     }
 
     updateCustomerPatience(customer) {
