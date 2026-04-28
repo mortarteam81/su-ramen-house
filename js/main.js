@@ -227,6 +227,15 @@ function startNewGame({ replayFirstBowlGuide = false } = {}) {
         ui.showComboCelebration(combo, bonus);
     };
 
+    game.onComboBreak = (combo, message) => {
+        ui.showToast(`💔 ${combo} 콤보 종료`, 'warning');
+        ui.showComboBreak(combo, message);
+    };
+
+    game.onDayClear = (day) => {
+        ui.showToast(`🎉 ${day.title} 목표 달성!`, 'success', 3000);
+    };
+
     game.onLifeLost = (lives) => {
         // 화면 흔들림 효과
         document.getElementById('screen-game').classList.add('screen-shake');
@@ -280,6 +289,9 @@ function getGameDebugState() {
         served: game.served,
         lives: game.lives,
         combo: game.combo,
+        maxCombo: game.maxCombo,
+        currentDay: game.currentDay,
+        dayCleared: game.dayCleared,
         selectedPot: game.cooking.selectedPot,
         customers: game.customers.seats.map((customer, seatIndex) => {
             if (!customer || customer.left) return null;

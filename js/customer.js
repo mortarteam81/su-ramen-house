@@ -1,17 +1,17 @@
 /* ===== 고객 시스템 ===== */
-import { CUSTOMER_TYPES, GAME, RECIPES } from './config.js';
+import { CUSTOMER_TYPES, DIFFICULTY_PRESETS, EARLY_CUSTOMER_QUEUE, GAME, RECIPES } from './config.js';
 
 let customerIdCounter = 0;
 
 export class Customer {
-    constructor(type, menuId, seatIndex) {
+    constructor(type, menuId, seatIndex, { patienceMultiplier = 1 } = {}) {
         this.id = ++customerIdCounter;
         this.type = type;
         this.typeData = CUSTOMER_TYPES[type];
         this.menuId = menuId;
         this.seatIndex = seatIndex;
         this.arrivalTime = Date.now();
-        this.patience = this.typeData.patience;
+        this.patience = Math.round(this.typeData.patience * patienceMultiplier);
         this.patienceRemaining = 1.0;
         this.served = false;
         this.left = false;
@@ -65,6 +65,12 @@ export class CustomerManager {
         this.seats = new Array(GAME.MAX_SEATS).fill(null);
         this.nextSpawnTime = 0;
         this.spawnEnabled = false;
+        this.difficulty = DIFFICULTY_PRESETS.normal;
+        this.spawnCount = 0;
+    }
+
+    setDifficulty(preset) {
+        this.difficulty = preset || DIFFICULTY_PRESETS.normal;
     }
 
     /** 게임 시작 시 호출 */
@@ -72,7 +78,8 @@ export class CustomerManager {
         this.seats.fill(null);
         this.spawnEnabled = true;
         customerIdCounter = 0;
-        const firstCustomer = this.spawnCustomer({ type: 'child', menuId: 'basic' });
+        this.spawnCount = 0;
+        const firstCustomer = this.spawnCustomer(EARLY_CUSTOMER_QUEUE[0]);
         this.scheduleNextSpawn();
         return firstCustomer;
     }
@@ -82,18 +89,25 @@ export class CustomerManager {
         const seatIndex = this.findEmptySeat();
         if (seatIndex === -1) return null;
 
-        const type = options.type || this.pickRandomType();
+        const earlyCustomer = !options.type && !options.menuId
+            ? EARLY_CUSTOMER_QUEUE[this.spawnCount]
+            : null;
+        const type = options.type || earlyCustomer?.type || this.pickRandomType();
         const typeData = CUSTOMER_TYPES[type];
-        const menuId = options.menuId || this.menuManager.getRandomMenu(typeData.allowedMenus || null);
-        const customer = new Customer(type, menuId, seatIndex);
+        const menuId = options.menuId || earlyCustomer?.menuId || this.menuManager.getRandomMenu(typeData.allowedMenus || null);
+        const customer = new Customer(type, menuId, seatIndex, {
+            patienceMultiplier: this.difficulty.patienceMultiplier,
+        });
         this.seats[seatIndex] = customer;
+        this.spawnCount++;
         return customer;
     }
 
     /** 다음 고객 스폰 예약 */
     scheduleNextSpawn() {
-        const delay = GAME.SPAWN_INTERVAL_MIN +
-            Math.random() * (GAME.SPAWN_INTERVAL_MAX - GAME.SPAWN_INTERVAL_MIN);
+        const min = this.difficulty.spawnIntervalMin || GAME.SPAWN_INTERVAL_MIN;
+        const max = this.difficulty.spawnIntervalMax || GAME.SPAWN_INTERVAL_MAX;
+        const delay = min + Math.random() * (max - min);
         this.nextSpawnTime = Date.now() + delay;
     }
 

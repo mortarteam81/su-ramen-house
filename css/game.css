@@ -46,6 +46,20 @@
     animation: pulse 0.5s ease;
 }
 
+.hud-day {
+    padding: 4px 10px;
+    border: 1px solid rgba(255, 213, 79, 0.35);
+    border-radius: var(--radius-full);
+    background: rgba(255, 213, 79, 0.1);
+    color: var(--color-text-dim);
+    font-size: 13px;
+}
+
+#hud-day-label {
+    color: var(--color-secondary);
+    font-weight: bold;
+}
+
 #btn-pause {
     margin-left: auto;
 }
@@ -813,4 +827,29 @@
 
 .combo-celebration-card small {
     font-size: 16px;
+}
+
+.combo-break-pop {
+    position: fixed;
+    left: 50%;
+    top: 92px;
+    z-index: 2101;
+    padding: 10px 16px;
+    border: 2px solid rgba(244, 67, 54, 0.55);
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, rgba(183, 28, 28, 0.96), rgba(244, 67, 54, 0.92));
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    box-shadow: 0 10px 34px rgba(0, 0, 0, 0.35), 0 0 22px rgba(244, 67, 54, 0.4);
+    transform: translateX(-50%);
+    pointer-events: none;
+    animation: serveResultPop 1.45s ease forwards;
+}
+
+.gameover-result {
+    margin: 0 0 var(--space-md);
+    color: var(--color-secondary);
+    text-align: center;
+    line-height: 1.5;
 }

@@ -1,5 +1,5 @@
 /* ===== 게임 루프 & 상태 관리 ===== */
-import { GAME, MENU_UNLOCK_THRESHOLDS } from './config.js';
+import { DAY_STAGES, DEFAULT_DIFFICULTY, DIFFICULTY_PRESETS, GAME, MENU_UNLOCK_THRESHOLDS } from './config.js';
 import { CookingStation } from './cooking.js';
 import { CustomerManager } from './customer.js';
 import { MenuManager } from './menu.js';
@@ -29,6 +29,10 @@ export class Game {
         this.combo = 0;
         this.maxCombo = 0;
         this.sessionMoney = 0;   // 이번 게임에서 번 돈
+        this.currentDay = DAY_STAGES[0];
+        this.difficultyKey = this.currentDay?.difficulty || DEFAULT_DIFFICULTY;
+        this.difficulty = DIFFICULTY_PRESETS[this.difficultyKey] || DIFFICULTY_PRESETS[DEFAULT_DIFFICULTY];
+        this.dayCleared = false;
 
         // 콜백
         this.onUpdate = null;        // 매 프레임 UI 업데이트
@@ -37,8 +41,10 @@ export class Game {
         this.onServeSuccess = null;   // 서빙 성공
         this.onGameOver = null;       // 게임 오버
         this.onCombo = null;          // 콤보 달성
+        this.onComboBreak = null;     // 콤보 끊김
         this.onLifeLost = null;       // 생명 감소
         this.onMenuUnlock = null;     // 메뉴 해금
+        this.onDayClear = null;       // 하루 목표 달성
 
         this._animFrameId = null;
         this._pauseStartTime = null;
@@ -53,8 +59,13 @@ export class Game {
         this.combo = 0;
         this.maxCombo = 0;
         this.sessionMoney = 0;
+        this.dayCleared = false;
+        this.currentDay = DAY_STAGES[0];
+        this.difficultyKey = this.currentDay?.difficulty || DEFAULT_DIFFICULTY;
+        this.difficulty = DIFFICULTY_PRESETS[this.difficultyKey] || DIFFICULTY_PRESETS[DEFAULT_DIFFICULTY];
 
         this.cooking.resetAll();
+        this.customers.setDifficulty(this.difficulty);
         const firstCustomer = this.customers.start();
         if (firstCustomer && this.onCustomerSpawn) {
             this.onCustomerSpawn(firstCustomer);
@@ -83,7 +94,7 @@ export class Game {
         // 고객 떠남 (서빙 실패)
         for (const customer of customerResult.left) {
             this.lives--;
-            this.combo = 0;
+            this.breakCombo('손님이 떠나 콤보가 끊겼습니다!');
             if (this.onCustomerLeave) this.onCustomerLeave(customer);
             if (this.onLifeLost) this.onLifeLost(this.lives);
 
@@ -105,18 +116,23 @@ export class Game {
 
         const pot = this.cooking.getPotState(potId);
         if (!pot || pot.state !== 'done') {
+            this.breakCombo('서빙 흐름이 끊겼습니다!');
             return { success: false, reason: '아직 완성되지 않았습니다!' };
         }
 
         // 먼저 해당 레시피를 주문한 고객이 있는지 확인
         const customer = this.customers.findCustomerForRecipe(pot.targetRecipe);
         if (!customer) {
+            this.breakCombo('주문과 맞지 않아 콤보가 끊겼습니다!');
             return { success: false, reason: '이 메뉴를 주문한 손님이 없습니다!' };
         }
 
         // 고객이 있으면 냄비에서 서빙
         const serveResult = this.cooking.serve(potId);
-        if (!serveResult.success) return serveResult;
+        if (!serveResult.success) {
+            this.breakCombo('서빙 흐름이 끊겼습니다!');
+            return serveResult;
+        }
 
         // 서빙 성공 - 보상 계산
         const reward = this.customers.serveCustomer(customer.id);
@@ -135,9 +151,10 @@ export class Game {
 
             // 콤보 보너스
             if (this.combo >= GAME.COMBO_THRESHOLD && this.combo % GAME.COMBO_THRESHOLD === 0) {
-                this.money += GAME.COMBO_BONUS;
-                this.sessionMoney += GAME.COMBO_BONUS;
-                if (this.onCombo) this.onCombo(this.combo, GAME.COMBO_BONUS);
+                const comboBonus = this.difficulty.comboBonus || GAME.COMBO_BONUS;
+                this.money += comboBonus;
+                this.sessionMoney += comboBonus;
+                if (this.onCombo) this.onCombo(this.combo, comboBonus);
             }
 
             if (this.onServeSuccess) {
@@ -146,9 +163,20 @@ export class Game {
 
             // 수익 기반 메뉴 자동 해금 체크
             this.checkAutoUnlock();
+
+            if (this.currentDay?.goalServed && this.served >= this.currentDay.goalServed) {
+                this._completeDay();
+            }
         }
 
         return { success: true, reward, customer };
+    }
+
+    breakCombo(message) {
+        if (this.combo <= 0) return;
+        const brokenCombo = this.combo;
+        this.combo = 0;
+        if (this.onComboBreak) this.onComboBreak(brokenCombo, message);
     }
 
     /** 재료 추가 */
@@ -240,8 +268,18 @@ export class Game {
                 money: this.sessionMoney,
                 served: this.served,
                 maxCombo: this.maxCombo,
+                day: this.currentDay,
+                dayCleared: this.dayCleared,
             });
         }
+    }
+
+    /** 하루 목표 달성 */
+    _completeDay() {
+        if (this.dayCleared) return;
+        this.dayCleared = true;
+        if (this.onDayClear) this.onDayClear(this.currentDay);
+        this._endGame();
     }
 
     /** 메뉴 해금 */

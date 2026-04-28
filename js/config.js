@@ -149,6 +149,52 @@ export const GAME = {
     COMBO_BONUS: 500,          // 콤보 보너스 금액
 };
 
+// 난이도 프리셋: UI는 아직 고정(normal)이지만 밸런스 조정 지점을 한 곳에 모았다.
+export const DIFFICULTY_PRESETS = {
+    easy: {
+        label: '쉬움',
+        patienceMultiplier: 1.35,
+        spawnIntervalMin: 5500,
+        spawnIntervalMax: 9500,
+        comboBonus: 600,
+    },
+    normal: {
+        label: '보통',
+        patienceMultiplier: 1.15,
+        spawnIntervalMin: 4500,
+        spawnIntervalMax: 8500,
+        comboBonus: GAME.COMBO_BONUS,
+    },
+    challenge: {
+        label: '도전',
+        patienceMultiplier: 0.95,
+        spawnIntervalMin: 3200,
+        spawnIntervalMax: 6800,
+        comboBonus: 700,
+    },
+};
+
+export const DEFAULT_DIFFICULTY = 'normal';
+
+// 간단한 일차/스테이지 구조. 우선 하루 단위 명확한 목표와 결과를 제공한다.
+export const DAY_STAGES = [
+    {
+        day: 1,
+        title: '첫 영업일',
+        goalServed: 8,
+        difficulty: DEFAULT_DIFFICULTY,
+        goalText: '라면 8그릇 서빙',
+        clearText: '첫 영업 성공! 손님들이 다시 오고 싶어 해요.',
+    },
+];
+
+// 초반 3명은 레시피가 짧고 인내심이 넉넉한 손님으로 고정해 첫 학습 곡선을 완만하게 한다.
+export const EARLY_CUSTOMER_QUEUE = [
+    { type: 'child', menuId: 'basic' },
+    { type: 'grandma', menuId: 'basic' },
+    { type: 'student', menuId: 'egg' },
+];
+
 // 메뉴 자동 해금 기준 (세션 누적 수익)
 export const MENU_UNLOCK_THRESHOLDS = [
     { money: 5000, menuId: 'kimchi', message: '김치 라면 해금!' },

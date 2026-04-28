@@ -31,6 +31,8 @@ export class UI {
             lives: document.getElementById('hud-lives'),
             combo: document.getElementById('hud-combo'),
             comboCount: document.getElementById('hud-combo-count'),
+            dayLabel: document.getElementById('hud-day-label'),
+            dayGoal: document.getElementById('hud-day-goal'),
         };
 
         // 메뉴 화면
@@ -59,6 +61,8 @@ export class UI {
         this.goServed = document.getElementById('go-served');
         this.goMoney = document.getElementById('go-money');
         this.goCombo = document.getElementById('go-combo');
+        this.goTitle = document.getElementById('go-title');
+        this.goResult = document.getElementById('go-result');
 
         // 토스트 / 이펙트
         this.toastContainer = document.getElementById('toast-container');
@@ -179,6 +183,11 @@ export class UI {
             this.hud.comboCount.textContent = game.combo;
         } else {
             this.hud.combo.style.display = 'none';
+        }
+
+        if (this.hud.dayLabel && this.hud.dayGoal && game.currentDay) {
+            this.hud.dayLabel.textContent = `Day ${game.currentDay.day} · ${game.currentDay.title}`;
+            this.hud.dayGoal.textContent = `${game.served}/${game.currentDay.goalServed} ${game.currentDay.goalText}`;
         }
     }
 
@@ -462,6 +471,14 @@ export class UI {
         setTimeout(() => el.remove(), 1400);
     }
 
+    showComboBreak(combo, message) {
+        const el = document.createElement('div');
+        el.className = 'combo-break-pop';
+        el.textContent = `💔 ${combo} 콤보 종료 · ${message || '흐름이 끊겼어요'}`;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 1500);
+    }
+
     // ===== 레시피 힌트 =====
     showRecipeHint(possibleRecipes, confirmableRecipes = null, onConfirmCook = null) {
         if ((!possibleRecipes || possibleRecipes.length === 0) && (!confirmableRecipes || confirmableRecipes.length === 0)) {
@@ -633,6 +650,12 @@ export class UI {
 
     // ===== 게임오버 화면 =====
     showGameOver(stats) {
+        if (this.goTitle) this.goTitle.textContent = stats.dayCleared ? '🎉 장사 완료!' : '😢 게임 오버';
+        if (this.goResult) {
+            this.goResult.textContent = stats.dayCleared
+                ? (stats.day?.clearText || '오늘 목표를 달성했습니다!')
+                : (stats.day ? `${stats.day.title} 목표: ${stats.day.goalText}` : '다음에는 더 잘할 수 있어요!');
+        }
         this.goServed.textContent = stats.served;
         this.goMoney.textContent = stats.money.toLocaleString();
         this.goCombo.textContent = stats.maxCombo;

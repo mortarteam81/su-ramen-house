@@ -98,6 +98,11 @@
         <span class="hud-label">🍜</span>
         <span id="hud-served">0</span><span>그릇</span>
       </div>
+      <div class="hud-item hud-day" id="hud-day">
+        <span>📅</span>
+        <span id="hud-day-label">Day 1</span>
+        <span id="hud-day-goal">목표 8그릇</span>
+      </div>
       <div class="hud-item hud-combo" id="hud-combo" style="display:none;">
         <span>🔥</span>
         <span id="hud-combo-count">0</span><span> 콤보!</span>
@@ -195,7 +200,8 @@
   <!-- ===== 게임 오버 화면 ===== -->
   <section id="screen-gameover" class="screen">
     <div class="gameover-container">
-      <h2>😢 게임 오버</h2>
+      <h2 id="go-title">😢 게임 오버</h2>
+      <p id="go-result" class="gameover-result"></p>
       <div class="gameover-stats">
         <div class="stat-item">
           <span class="stat-label">서빙한 라면</span>
