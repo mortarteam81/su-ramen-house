@@ -233,3 +233,20 @@ Verification passed:
 - `node --check js/*.js`
 - `node scripts/first-bowl-regression.mjs`
 - `node scripts/game-regression.mjs`
+
+## 2026-04-28 Wave 16 Implementation — Expanded Cooking SFX
+
+User requested more specific effects: gas stove clicks, water pouring, egg cracking, boiling, and customer slurping. User approved Rel solo.
+
+Implemented:
+- Strengthened gas stove SFX into two ignition clicks plus flame noise.
+- Added water pouring/drop SFX on `water` ingredient add.
+- Added egg crack SFX on `egg` ingredient add.
+- Improved boiling SFX duration and bubble pulses.
+- Improved noodle slurp SFX with longer multi-pulse slurp.
+- Added `docs/expanded-cooking-sfx-plan.md`.
+
+Verification passed:
+- `node --check js/*.js`
+- `node scripts/first-bowl-regression.mjs`
+- `node scripts/game-regression.mjs`

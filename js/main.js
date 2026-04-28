@@ -45,19 +45,78 @@ class RamenSfx {
         if (!ctx) return;
         const now = ctx.currentTime;
 
-        // 점화 딸깍
-        const click = ctx.createOscillator();
-        const clickGain = this.makeGain(ctx, 0.18);
-        click.type = 'square';
-        click.frequency.setValueAtTime(1400, now);
-        click.frequency.exponentialRampToValueAtTime(260, now + 0.08);
-        clickGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.1);
-        click.connect(clickGain);
-        click.start(now);
-        click.stop(now + 0.11);
+        // 점화 딸깍딸깍
+        [0, 0.085].forEach((offset, index) => {
+            const click = ctx.createOscillator();
+            const clickGain = this.makeGain(ctx, index === 0 ? 0.16 : 0.2);
+            const t = now + offset;
+            click.type = 'square';
+            click.frequency.setValueAtTime(1600, t);
+            click.frequency.exponentialRampToValueAtTime(320, t + 0.055);
+            clickGain.gain.setValueAtTime(0.0001, t);
+            clickGain.gain.exponentialRampToValueAtTime(index === 0 ? 0.16 : 0.2, t + 0.008);
+            clickGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.075);
+            click.connect(clickGain);
+            click.start(t);
+            click.stop(t + 0.08);
+        });
 
         // 짧은 화르륵
-        this.playNoiseBurst({ duration: 0.22, volume: 0.12, lowpass: 1800, attack: 0.025 });
+        this.playNoiseBurst({ duration: 0.28, volume: 0.13, lowpass: 1900, attack: 0.035 });
+    }
+
+    playWaterPour() {
+        const ctx = this.getContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        this.playNoiseBurst({ duration: 0.58, volume: 0.07, lowpass: 2600, attack: 0.04 });
+        for (let i = 0; i < 7; i++) {
+            const drop = ctx.createOscillator();
+            const gain = this.makeGain(ctx, 0.025);
+            const t = now + 0.04 + i * 0.065;
+            drop.type = 'sine';
+            drop.frequency.setValueAtTime(780 + Math.random() * 420, t);
+            drop.frequency.exponentialRampToValueAtTime(420 + Math.random() * 160, t + 0.05);
+            gain.gain.setValueAtTime(0.0001, t);
+            gain.gain.exponentialRampToValueAtTime(0.03, t + 0.012);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+            drop.connect(gain);
+            drop.start(t);
+            drop.stop(t + 0.08);
+        }
+    }
+
+    playEggCrack() {
+        const ctx = this.getContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        const crack = ctx.createOscillator();
+        const gain = this.makeGain(ctx, 0.17);
+        crack.type = 'triangle';
+        crack.frequency.setValueAtTime(2400, now);
+        crack.frequency.exponentialRampToValueAtTime(520, now + 0.045);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.07);
+        crack.connect(gain);
+        crack.start(now);
+        crack.stop(now + 0.08);
+        setTimeout(() => this.playNoiseBurst({ duration: 0.13, volume: 0.06, lowpass: 1600, attack: 0.01 }), 35);
+    }
+
+    playIngredientDrop(ingredientId) {
+        if (ingredientId === 'water') return this.playWaterPour();
+        if (ingredientId === 'egg') return this.playEggCrack();
+        const ctx = this.getContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        const pop = ctx.createOscillator();
+        const gain = this.makeGain(ctx, 0.035);
+        pop.type = 'sine';
+        pop.frequency.setValueAtTime(520, now);
+        pop.frequency.exponentialRampToValueAtTime(260, now + 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.1);
+        pop.connect(gain);
+        pop.start(now);
+        pop.stop(now + 0.11);
     }
 
     playBoil() {
@@ -65,11 +124,11 @@ class RamenSfx {
         if (!ctx) return;
         const now = ctx.currentTime;
 
-        this.playNoiseBurst({ duration: 1.2, volume: 0.08, lowpass: 950, attack: 0.12 });
-        for (let i = 0; i < 5; i++) {
+        this.playNoiseBurst({ duration: 1.65, volume: 0.09, lowpass: 980, attack: 0.14 });
+        for (let i = 0; i < 9; i++) {
             const bubble = ctx.createOscillator();
             const gain = this.makeGain(ctx, 0.028);
-            const t = now + 0.12 + i * 0.18;
+            const t = now + 0.1 + i * 0.15;
             bubble.type = 'sine';
             bubble.frequency.setValueAtTime(180 + Math.random() * 120, t);
             bubble.frequency.exponentialRampToValueAtTime(85 + Math.random() * 50, t + 0.16);
@@ -86,19 +145,19 @@ class RamenSfx {
         const ctx = this.getContext();
         if (!ctx) return;
         const now = ctx.currentTime;
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 5; i++) {
             const osc = ctx.createOscillator();
-            const gain = this.makeGain(ctx, 0.055);
-            const t = now + i * 0.12;
+            const gain = this.makeGain(ctx, 0.06);
+            const t = now + i * 0.115;
             osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(520 + i * 80, t);
-            osc.frequency.exponentialRampToValueAtTime(980 + i * 70, t + 0.12);
+            osc.frequency.setValueAtTime(460 + i * 55, t);
+            osc.frequency.exponentialRampToValueAtTime(1080 + i * 55, t + 0.13);
             gain.gain.setValueAtTime(0.0001, t);
             gain.gain.exponentialRampToValueAtTime(0.055, t + 0.025);
-            gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
             osc.connect(gain);
             osc.start(t);
-            osc.stop(t + 0.17);
+            osc.stop(t + 0.19);
         }
     }
 
@@ -357,6 +416,7 @@ function startNewGame({ replayFirstBowlGuide = false, dayIndex = null } = {}) {
         const selectedPotBeforeAdd = game.cooking.selectedPot;
         const result = game.addIngredient(ingredientId);
         if (result?.success && selectedPotBeforeAdd !== null) {
+            if (!result.cooking) sfx.playIngredientDrop(ingredientId);
             ui.throwIngredientToPot(ingredientId, selectedPotBeforeAdd);
             ui.setChefState(result.cooking ? 'cooking' : 'happy', result.cooking ? '불 올립니다!' : '좋아요, 다음 재료!', { duration: result.cooking ? 1200 : 650 });
         } else {
