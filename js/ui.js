@@ -125,9 +125,9 @@ export class UI {
 
     startFirstBowlGuide({ force = false } = {}) {
         this.firstGuideActive = force || !this.isFirstBowlGuideHidden();
-        this.firstGuideMinimized = false;
+        this.firstGuideMinimized = this.isCompactMobileViewport();
         if (!this.firstBowlGuide) return;
-        this.firstBowlGuide.classList.remove('minimized');
+        this.firstBowlGuide.classList.toggle('minimized', this.firstGuideMinimized);
         this.firstBowlGuide.style.display = this.firstGuideActive ? 'flex' : 'none';
     }
 
@@ -610,23 +610,43 @@ export class UI {
     }
 
     // ===== 레시피 힌트 =====
+    isCompactMobileViewport() {
+        return typeof window !== 'undefined' && window.matchMedia('(max-width: 680px)').matches;
+    }
+
+    formatRecipeHintRecipe(recipe, { compact = false, confirmable = false } = {}) {
+        if (!recipe) return '';
+        const cost = `${Number(recipe.cost || 0).toLocaleString()}원`;
+        if (compact) {
+            return confirmable
+                ? `${recipe.emoji} ${recipe.name} · ${cost}`
+                : `${recipe.emoji} ${recipe.name} ${recipe.ingredients.map(i => INGREDIENTS[i].emoji).join('→')} · ${cost}`;
+        }
+        return confirmable
+            ? `${recipe.name} 조리 시작 · 재료비 ${cost}`
+            : `${recipe.emoji} ${recipe.name}: ${recipe.ingredients.map(i => INGREDIENTS[i].emoji).join('→')} · 재료비 ${cost}`;
+    }
+
     showRecipeHint(possibleRecipes, confirmableRecipes = null, onConfirmCook = null) {
         if ((!possibleRecipes || possibleRecipes.length === 0) && (!confirmableRecipes || confirmableRecipes.length === 0)) {
             this.recipeHint.style.display = 'none';
             return;
         }
+        const compact = this.isCompactMobileViewport();
         this.recipeHint.style.display = 'flex';
+        this.recipeHint.classList.toggle('compact-mobile', compact);
+        document.getElementById('screen-game')?.classList.add('recipe-open');
         this.recipeHintContent.innerHTML = '';
 
-        // 지금 바로 조리 가능한 레시피 (확정 버튼 포함)
         if (confirmableRecipes && confirmableRecipes.length > 0) {
             confirmableRecipes.forEach((id, index) => {
                 const r = RECIPES[id];
                 const btn = document.createElement('button');
                 btn.className = `btn-confirm-cook ${index === 0 ? 'primary-cta' : 'secondary-cta'}`;
-                btn.innerHTML = index === 0
-                    ? `🔥 ${r.name} 조리 시작 · 재료비 ${Number(r.cost || 0).toLocaleString()}원`
-                    : `${r.emoji} ${r.name}도 가능 · 재료비 ${Number(r.cost || 0).toLocaleString()}원`;
+                btn.innerHTML = compact
+                    ? (index === 0 ? `🔥 조리 시작 <strong>${Number(r.cost || 0).toLocaleString()}원</strong>` : this.formatRecipeHintRecipe(r, { compact: true, confirmable: true }))
+                    : (index === 0 ? `🔥 ${this.formatRecipeHintRecipe(r, { confirmable: true })}` : `${r.emoji} ${r.name}도 가능 · 재료비 ${Number(r.cost || 0).toLocaleString()}원`);
+                btn.setAttribute('aria-label', `${r.name} 조리 시작, 재료비 ${Number(r.cost || 0).toLocaleString()}원`);
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     if (onConfirmCook) onConfirmCook(id);
@@ -635,21 +655,21 @@ export class UI {
             });
         }
 
-        // 재료를 더 넣으면 만들 수 있는 레시피
         if (possibleRecipes && possibleRecipes.length > 0) {
             const hintsText = document.createElement('span');
             hintsText.className = 'recipe-hint-text';
-            const hints = possibleRecipes.map(id => {
-                const r = RECIPES[id];
-                return `${r.emoji} ${r.name}: ${r.ingredients.map(i => INGREDIENTS[i].emoji).join('→')} · 재료비 ${Number(r.cost || 0).toLocaleString()}원`;
-            });
-            hintsText.textContent = (confirmableRecipes && confirmableRecipes.length > 0 ? ' 또는 재료 추가: ' : '') + hints.join(' | ');
+            const hints = possibleRecipes.map(id => this.formatRecipeHintRecipe(RECIPES[id], { compact }));
+            hintsText.textContent = compact
+                ? `다음 후보 ${hints.join(' · ')}`
+                : (confirmableRecipes && confirmableRecipes.length > 0 ? ' 또는 재료 추가: ' : '') + hints.join(' | ');
             this.recipeHintContent.appendChild(hintsText);
         }
     }
 
     hideRecipeHint() {
         this.recipeHint.style.display = 'none';
+        this.recipeHint.classList.remove('compact-mobile');
+        document.getElementById('screen-game')?.classList.remove('recipe-open');
     }
 
     // ===== 고객 UI =====

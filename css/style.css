@@ -806,3 +806,84 @@ html, body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-primary);
 }
+
+/* ===== Wave 10 mobile overlay/toast fitting ===== */
+.story-card {
+  max-height: min(86dvh, 720px);
+  overflow-y: auto;
+}
+
+@media (max-width: 900px) {
+  .overlay {
+    padding: 12px;
+  }
+
+  .story-card {
+    width: min(100%, 480px);
+    max-height: min(88dvh, 680px);
+    padding: 20px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .story-card h2 {
+    font-size: 24px;
+    margin: 10px 0;
+  }
+
+  .story-intro {
+    font-size: 13px;
+    line-height: 1.55;
+    margin-bottom: 14px;
+  }
+
+  .story-goal-box {
+    margin-bottom: 16px;
+    padding: 12px;
+  }
+
+  .story-goal-box strong {
+    font-size: 16px;
+  }
+
+  #toast-container {
+    top: calc(96px + env(safe-area-inset-top, 0px));
+    right: 8px;
+    bottom: auto;
+    left: 8px;
+    align-items: flex-end;
+    gap: 6px;
+  }
+
+  .toast {
+    width: min(100%, 320px);
+    padding: 10px 12px;
+    font-size: 12px;
+    transform: translateY(-8px);
+  }
+
+  .toast.show {
+    transform: translateY(0);
+  }
+
+  .toast.hide {
+    transform: translateY(-8px);
+  }
+}
+
+@media (max-width: 560px) {
+  .overlay-content,
+  .gameover-container,
+  .howto-container,
+  .shop-container,
+  .story-card {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .story-day {
+    font-size: 12px;
+  }
+
+  .story-card h2 {
+    font-size: 22px;
+  }
+}

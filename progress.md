@@ -114,3 +114,28 @@ Recommended role sequence:
 4. Rel/main: final integration, commit/push, server for testing.
 
 Scope cap: mobile portrait browser playability for Day 1; no new gameplay systems, no new art, no full app/PWA work.
+
+## 2026-04-28 Wave 10 Implementation — Mobile Playability
+
+Completed with real specialist-agent workflow:
+- design / davinciavatar reviewed current mobile density and produced a layout spec.
+- worker / muskeron implemented the mobile pass.
+- reviewer / windmageranian QA'd mobile screenshots, found a 375x667 CTA/order visibility issue, and applied a short-screen compression fix plus capture-script fix.
+- Rel/main performed final QA and added a final fixed bottom recipe/ingredient layout for 375x667 CTA state.
+
+Implemented:
+- 2-row mobile HUD.
+- Compact first-bowl guide behavior on phones.
+- Reduced customer/chef sprite footprint on phones.
+- Phone-focused customer zone, 2-column pots, separated serve/discard action group.
+- Compact mobile recipe CTA with cost attached.
+- Safe-area-aware ingredient tray; on very short phones with recipe CTA open, ingredients become a one-row horizontal tray and recipe CTA is fixed above it.
+- Mobile toast/story fitting improvements.
+- `_review/wave10-mobile-capture.mjs` for mobile/tablet screenshots.
+
+Verification passed:
+- `node --check js/*.js`
+- `node scripts/first-bowl-regression.mjs`
+- `node scripts/game-regression.mjs`
+- `node _review/wave10-mobile-capture.mjs`
+- Vision QA for 375x667 start/CTA/done and 768x1024 tablet sanity: no serious blockers after final fixes.
