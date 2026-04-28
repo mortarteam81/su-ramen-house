@@ -183,3 +183,20 @@ Verification passed:
 - `node scripts/first-bowl-regression.mjs`
 - `node scripts/game-regression.mjs`
 - Local HTTP check: `/assets/audio/background-music.mp3` returns 200 `audio/mpeg`.
+
+## 2026-04-28 Wave 13 Implementation — Cooking and Eating SFX
+
+User asked for gas stove, boiling water, and noodle slurping effects. User approved Rel solo + Web Audio API temporary SFX generation.
+
+Implemented:
+- Added `RamenSfx` Web Audio synthesizer in `js/main.js`.
+- Gas ignition plays on cook start.
+- Boiling/bubble sound plays shortly after cook start.
+- Slurp sound plays when served customer enters eating lifecycle.
+- Existing music toggle now effectively mutes both BGM and generated SFX.
+- Added `docs/cooking-sfx-plan.md`.
+
+Verification passed:
+- `node --check js/*.js`
+- `node scripts/first-bowl-regression.mjs`
+- `node scripts/game-regression.mjs`

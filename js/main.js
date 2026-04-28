@@ -17,6 +17,118 @@ bgm.loop = true;
 bgm.volume = 0.32;
 let bgmMuted = localStorage.getItem(BGM_MUTED_KEY) === '1';
 
+class RamenSfx {
+    constructor(isMuted) {
+        this.isMuted = isMuted;
+        this.ctx = null;
+    }
+
+    getContext() {
+        if (this.isMuted()) return null;
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return null;
+        if (!this.ctx) this.ctx = new AudioContextClass();
+        if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+        return this.ctx;
+    }
+
+    makeGain(ctx, volume = 0.2) {
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(volume, ctx.currentTime + 0.015);
+        gain.connect(ctx.destination);
+        return gain;
+    }
+
+    playIgnition() {
+        const ctx = this.getContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+
+        // 점화 딸깍
+        const click = ctx.createOscillator();
+        const clickGain = this.makeGain(ctx, 0.18);
+        click.type = 'square';
+        click.frequency.setValueAtTime(1400, now);
+        click.frequency.exponentialRampToValueAtTime(260, now + 0.08);
+        clickGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.1);
+        click.connect(clickGain);
+        click.start(now);
+        click.stop(now + 0.11);
+
+        // 짧은 화르륵
+        this.playNoiseBurst({ duration: 0.22, volume: 0.12, lowpass: 1800, attack: 0.025 });
+    }
+
+    playBoil() {
+        const ctx = this.getContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+
+        this.playNoiseBurst({ duration: 1.2, volume: 0.08, lowpass: 950, attack: 0.12 });
+        for (let i = 0; i < 5; i++) {
+            const bubble = ctx.createOscillator();
+            const gain = this.makeGain(ctx, 0.028);
+            const t = now + 0.12 + i * 0.18;
+            bubble.type = 'sine';
+            bubble.frequency.setValueAtTime(180 + Math.random() * 120, t);
+            bubble.frequency.exponentialRampToValueAtTime(85 + Math.random() * 50, t + 0.16);
+            gain.gain.setValueAtTime(0.0001, t);
+            gain.gain.exponentialRampToValueAtTime(0.04, t + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+            bubble.connect(gain);
+            bubble.start(t);
+            bubble.stop(t + 0.2);
+        }
+    }
+
+    playSlurp() {
+        const ctx = this.getContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        for (let i = 0; i < 3; i++) {
+            const osc = ctx.createOscillator();
+            const gain = this.makeGain(ctx, 0.055);
+            const t = now + i * 0.12;
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(520 + i * 80, t);
+            osc.frequency.exponentialRampToValueAtTime(980 + i * 70, t + 0.12);
+            gain.gain.setValueAtTime(0.0001, t);
+            gain.gain.exponentialRampToValueAtTime(0.055, t + 0.025);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+            osc.connect(gain);
+            osc.start(t);
+            osc.stop(t + 0.17);
+        }
+    }
+
+    playNoiseBurst({ duration = 0.4, volume = 0.08, lowpass = 1200, attack = 0.02 } = {}) {
+        const ctx = this.getContext();
+        if (!ctx) return;
+        const bufferSize = Math.max(1, Math.floor(ctx.sampleRate * duration));
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+        const source = ctx.createBufferSource();
+        const filter = ctx.createBiquadFilter();
+        const gain = ctx.createGain();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(lowpass, ctx.currentTime);
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(volume, ctx.currentTime + attack);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+        source.buffer = buffer;
+        source.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+        source.start();
+        source.stop(ctx.currentTime + duration + 0.02);
+    }
+}
+
+const sfx = new RamenSfx(() => bgmMuted);
+
 function updateMusicButton() {
     const btn = document.getElementById('btn-music');
     if (!btn) return;
@@ -27,6 +139,7 @@ function updateMusicButton() {
 
 function playBgmFromUserGesture() {
     if (bgmMuted) return;
+    sfx.getContext();
     bgm.play().catch(() => {
         // 브라우저 자동재생 정책상 실패할 수 있다. 다음 사용자 클릭에서 다시 시도한다.
     });
@@ -208,6 +321,8 @@ document.querySelectorAll('.pot-container').forEach(potEl => {
 function handleConfirmCook(recipeId) {
     const result = game.confirmCook(recipeId);
     if (result && result.success) {
+        sfx.playIgnition();
+        setTimeout(() => sfx.playBoil(), 180);
         ui.showToast(`${result.recipeName} 조리 시작! 🔥`, 'success');
         ui.setChefState('cooking', `${result.recipeName} 끓이는 중!`, { duration: 1400 });
         ui.hideRecipeHint();
@@ -266,6 +381,8 @@ function startNewGame({ replayFirstBowlGuide = false, dayIndex = null } = {}) {
                 }
             }
         } else if (result.cooking) {
+            sfx.playIgnition();
+            setTimeout(() => sfx.playBoil(), 180);
             ui.showToast(`${result.recipeName} 조리 시작! 🔥`, 'success');
             ui.setChefState('cooking', `${result.recipeName} 끓이는 중!`, { duration: 1400 });
             ui.hideRecipeHint();
@@ -322,6 +439,7 @@ function startNewGame({ replayFirstBowlGuide = false, dayIndex = null } = {}) {
         if (game.served === 1) ui.completeFirstBowlGuide();
         ui.flashCustomerMatch(customer, 'success');
         ui.playCustomerServedLifecycle(customer);
+        setTimeout(() => sfx.playSlurp(), 120);
         ui.setChefState(combo >= 2 ? 'combo' : 'happy', combo >= 2 ? `${combo}콤보, 좋아요!` : '서빙 성공!', { duration: 1200 });
         ui.showServeFeedback({ success: true, customer, reward });
         setTimeout(() => ui.removeCustomer(customer.seatIndex, false), 2750);
