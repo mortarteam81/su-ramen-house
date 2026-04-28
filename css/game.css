@@ -348,24 +348,9 @@
     padding: var(--space-md) var(--space-lg);
     background:
         linear-gradient(180deg, rgba(95, 50, 31, 0.32) 0%, rgba(42, 31, 36, 0.22) 65%, transparent 100%);
-    border-bottom: 3px solid var(--color-primary);
+    border-bottom: 2px solid rgba(255, 179, 71, 0.28);
     position: relative;
     z-index: 1;
-}
-
-.counter-area::after {
-    content: '';
-    position: absolute;
-    bottom: -3px;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg,
-            transparent,
-            var(--color-primary),
-            var(--color-secondary),
-            var(--color-primary),
-            transparent);
 }
 
 .counter-seats {
@@ -682,9 +667,9 @@
 
 .chef-character {
     position: absolute;
-    left: min(calc(100% - 150px), calc(50% + 300px));
-    bottom: 18px;
-    width: 128px;
+    left: min(calc(100% - 104px), calc(50% + 560px));
+    bottom: -8px;
+    width: 92px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1720,8 +1705,8 @@
     background-repeat: no-repeat;
     border: none;
     box-shadow: none;
-    width: 132px;
-    height: 176px;
+    width: 92px;
+    height: 124px;
     padding: 0;
 }
 
@@ -1749,7 +1734,7 @@
     background-image: url('../assets/characters/chef/chef_surprised.png');
 }
 
-.customer-type-child .customer-avatar {
+.customer-with-sprite .customer-avatar {
     width: 78px;
     height: 96px;
     border: none;
@@ -1759,8 +1744,8 @@
     overflow: visible;
 }
 
-.customer-type-child .customer-avatar::before,
-.customer-type-child .customer-avatar::after {
+.customer-with-sprite .customer-avatar::before,
+.customer-with-sprite .customer-avatar::after {
     content: none;
 }
 
@@ -1778,10 +1763,10 @@
     pointer-events: none;
 }
 
-.customer-type-child .customer-accessory,
-.customer-type-child .customer-emoji,
-.customer-type-child .customer-type-name,
-.customer-type-child .customer-trait {
+.customer-with-sprite .customer-accessory,
+.customer-with-sprite .customer-emoji,
+.customer-with-sprite .customer-type-name,
+.customer-with-sprite .customer-trait {
     display: none;
 }
 
@@ -1791,7 +1776,7 @@
         height: 118px;
     }
 
-    .customer-type-child .customer-avatar {
+    .customer-with-sprite .customer-avatar {
         width: 58px;
         height: 72px;
     }
@@ -1813,4 +1798,14 @@
         width: 58px;
         height: 86px;
     }
+}
+
+/* Pilot image sprites are expressive enough; hide chef bubble to avoid covering pot UI. */
+.chef-character .chef-speech {
+    display: none;
+}
+
+/* Keep the first-bowl guide compact once character art is present. */
+.first-bowl-guide .first-guide-steps {
+    display: none;
 }

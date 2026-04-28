@@ -5,12 +5,12 @@ import { POT_STATE } from './cooking.js';
 const FIRST_BOWL_GUIDE_KEY = 'ramen_shop_first_bowl_guide_hidden';
 const FIRST_BOWL_GUIDE_STEPS = ['pot', 'water', 'noodle', 'soup', 'cook', 'serve'];
 const FIRST_BOWL_GUIDE_MESSAGES = {
-    pot: '빈 냄비를 먼저 선택하세요',
-    water: '물 💧을 넣으세요',
-    noodle: '면 🍜을 넣으세요',
-    soup: '스프 🧂를 넣으세요',
-    cook: '레시피 힌트에서 조리 시작을 누르세요',
-    serve: '완성된 라면을 서빙하세요',
+    pot: '냄비 선택 · 빈 냄비를 먼저 선택하세요',
+    water: '물 · 물 💧을 넣으세요',
+    noodle: '면 · 면 🍜을 넣으세요',
+    soup: '스프 · 스프 🧂를 넣으세요',
+    cook: '조리 시작 · 레시피 힌트에서 눌러주세요',
+    serve: '서빙 · 완성된 라면을 전달하세요',
 };
 
 const CUSTOMER_STYLE_DETAILS = {
@@ -22,14 +22,15 @@ const CUSTOMER_STYLE_DETAILS = {
     child: { badge: '아이', accessory: '🧸', trait: '기본/계란', tone: '#FFB74D' },
 };
 
-const CHILD_SPRITE_BY_LIFECYCLE = {
-    entering: 'assets/characters/child/child_walking.png',
-    waiting: 'assets/characters/child/child_waiting.png',
-    eating: 'assets/characters/child/child_eating.png',
-    paying: 'assets/characters/child/child_paying.png',
-    leaving: 'assets/characters/child/child_walking.png',
-    'angry-leaving': 'assets/characters/child/child_angry.png',
-};
+const CUSTOMER_SPRITE_TYPES = ['normal', 'rush', 'grandma', 'vip', 'student', 'child'];
+const CUSTOMER_SPRITE_BY_TYPE = Object.fromEntries(CUSTOMER_SPRITE_TYPES.map(type => [type, {
+    entering: `assets/characters/${type}/${type}_walking.png`,
+    waiting: `assets/characters/${type}/${type}_waiting.png`,
+    eating: `assets/characters/${type}/${type}_eating.png`,
+    paying: `assets/characters/${type}/${type}_paying.png`,
+    leaving: `assets/characters/${type}/${type}_walking.png`,
+    'angry-leaving': `assets/characters/${type}/${type}_angry.png`,
+}]));
 
 export class UI {
     constructor() {
@@ -622,12 +623,13 @@ export class UI {
             trait: '손님',
             tone: typeData.color,
         };
-        const childSprite = customer.type === 'child'
-            ? '<img class="customer-fullbody-sprite" src="assets/characters/child/child_walking.png" alt="아이 손님 캐릭터">'
+        const spriteMap = CUSTOMER_SPRITE_BY_TYPE[customer.type];
+        const customerSprite = spriteMap
+            ? `<img class="customer-fullbody-sprite" src="${spriteMap.entering}" alt="${typeData.name} 캐릭터">`
             : '';
 
         seatEl.innerHTML = `
-      <div class="customer customer-enter customer-lifecycle-entering customer-type-${customer.type}" data-customer-id="${customer.id}" data-customer-type="${customer.type}" data-visual-state="entering" style="--customer-color:${typeData.color}; --customer-tone:${styleDetail.tone}">
+      <div class="customer customer-enter customer-lifecycle-entering customer-type-${customer.type} ${spriteMap ? 'customer-with-sprite' : ''}" data-customer-id="${customer.id}" data-customer-type="${customer.type}" data-visual-state="entering" style="--customer-color:${typeData.color}; --customer-tone:${styleDetail.tone}">
         <div class="customer-bubble">
           <div class="customer-type-badge">${styleDetail.badge}</div>
           <div class="customer-life-text">입장 중 · 자리 찾는 중</div>
@@ -638,7 +640,7 @@ export class UI {
           <div class="bubble-recipe" aria-label="레시피 순서">${recipeIcons}</div>
         </div>
         <div class="customer-avatar" style="background-color: ${typeData.color}20; border-color: ${typeData.color}">
-          ${childSprite}
+          ${customerSprite}
           <span class="customer-accessory" aria-hidden="true">${styleDetail.accessory}</span>
           <span class="customer-emoji">${typeData.emoji}</span>
           <span class="customer-type-name">${typeData.name}</span>
@@ -674,9 +676,10 @@ export class UI {
             customerEl.classList.add(`customer-lifecycle-${state}`);
             customerEl.dataset.visualState = state;
         }
-        const childSprite = customerEl.querySelector('.customer-fullbody-sprite');
-        if (childSprite && CHILD_SPRITE_BY_LIFECYCLE[state]) {
-            childSprite.src = CHILD_SPRITE_BY_LIFECYCLE[state];
+        const customerSprite = customerEl.querySelector('.customer-fullbody-sprite');
+        const spriteMap = CUSTOMER_SPRITE_BY_TYPE[customerEl.dataset.customerType];
+        if (customerSprite && spriteMap?.[state]) {
+            customerSprite.src = spriteMap[state];
         }
         const lifeText = customerEl.querySelector('.customer-life-text');
         if (lifeText) lifeText.textContent = text || this.getCustomerLifecycleText(state);
