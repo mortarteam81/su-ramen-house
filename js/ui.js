@@ -13,6 +13,15 @@ const FIRST_BOWL_GUIDE_MESSAGES = {
     serve: '완성된 라면을 서빙하세요',
 };
 
+const CUSTOMER_STYLE_DETAILS = {
+    normal: { badge: '단골', accessory: '🧣', trait: '편안함', tone: '#81C784' },
+    rush: { badge: '급함', accessory: '💼', trait: '빠른 서빙', tone: '#E57373' },
+    grandma: { badge: '느긋', accessory: '🌸', trait: '긴 인내심', tone: '#CE93D8' },
+    vip: { badge: 'VIP', accessory: '👑', trait: '큰 팁', tone: '#FFD700' },
+    student: { badge: '학생', accessory: '🎒', trait: '가성비', tone: '#64B5F6' },
+    child: { badge: '아이', accessory: '🧸', trait: '기본/계란', tone: '#FFB74D' },
+};
+
 export class UI {
     constructor() {
         // 화면 요소
@@ -534,9 +543,17 @@ export class UI {
             .map(id => `<span class="recipe-icon">${INGREDIENTS[id]?.emoji || '?'}</span>`)
             .join('<span class="recipe-arrow">→</span>') || '';
 
+        const styleDetail = CUSTOMER_STYLE_DETAILS[customer.type] || {
+            badge: typeData.name,
+            accessory: '🍥',
+            trait: '손님',
+            tone: typeData.color,
+        };
+
         seatEl.innerHTML = `
-      <div class="customer customer-enter" data-customer-id="${customer.id}">
+      <div class="customer customer-enter customer-type-${customer.type}" data-customer-id="${customer.id}" data-customer-type="${customer.type}" style="--customer-color:${typeData.color}; --customer-tone:${styleDetail.tone}">
         <div class="customer-bubble">
+          <div class="customer-type-badge">${styleDetail.badge}</div>
           <div class="bubble-title">
             <span class="bubble-emoji">${recipe?.emoji || '🍜'}</span>
             <span class="bubble-text">${recipe?.name || '라면'}</span>
@@ -544,8 +561,10 @@ export class UI {
           <div class="bubble-recipe" aria-label="레시피 순서">${recipeIcons}</div>
         </div>
         <div class="customer-avatar" style="background-color: ${typeData.color}20; border-color: ${typeData.color}">
+          <span class="customer-accessory" aria-hidden="true">${styleDetail.accessory}</span>
           <span class="customer-emoji">${typeData.emoji}</span>
           <span class="customer-type-name">${typeData.name}</span>
+          <span class="customer-trait">${styleDetail.trait}</span>
         </div>
         <div class="patience-bar-container">
           <div class="patience-bar" style="width: 100%; background-color: ${typeData.color}"></div>
