@@ -1,7 +1,7 @@
 /* ===== 메인 엔트리 포인트 ===== */
 import { Game, GAME_STATE } from './game.js';
 import { UI } from './ui.js';
-import { RECIPES, INGREDIENTS, CUSTOMER_TYPES } from './config.js';
+import { RECIPES, INGREDIENTS, CUSTOMER_TYPES, DAY_STAGES } from './config.js';
 
 // 초기화
 const game = new Game();
@@ -19,7 +19,7 @@ function initMenuScreen() {
 
 // 메인 메뉴 버튼
 document.getElementById('btn-start').addEventListener('click', () => {
-    startNewGame();
+    showStoryThenStart();
 });
 
 document.getElementById('btn-shop').addEventListener('click', () => {
@@ -84,7 +84,7 @@ document.getElementById('btn-quit').addEventListener('click', () => {
 
 // 게임 오버
 document.getElementById('btn-retry').addEventListener('click', () => {
-    startNewGame();
+    showStoryThenStart();
 });
 
 document.getElementById('btn-tomenu').addEventListener('click', () => {
@@ -155,6 +155,11 @@ function handleConfirmCook(recipeId) {
 }
 
 // ===== 게임 시작 =====
+function showStoryThenStart(options = {}) {
+    const day = DAY_STAGES[0];
+    ui.showStoryIntro(day, () => startNewGame(options));
+}
+
 function startNewGame({ replayFirstBowlGuide = false } = {}) {
     ui.applyCosmetics(game.getCosmetics());
     ui.showScreen('game');
@@ -266,7 +271,7 @@ function startNewGame({ replayFirstBowlGuide = false } = {}) {
 
     game.onCostCharged = (result) => {
         if (!result?.cost) return;
-        ui.showToast(`재료비 -${result.cost.toLocaleString()}원`, 'info', 1600);
+        // Cost is shown in the recipe CTA and pot status; avoid stacking toast noise during cooking.
     };
 
     game.onComboBreak = (combo, message) => {

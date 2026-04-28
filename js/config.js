@@ -189,10 +189,13 @@ export const DAY_STAGES = [
     {
         day: 1,
         title: '첫 영업일',
+        introTitle: '작은 라면가게의 첫 오픈날',
+        introText: '오늘은 가게 문을 여는 첫날이에요. 기본 라면부터 차근차근 만들며 손님의 마음을 잡아보세요.',
         goalServed: 8,
         difficulty: DEFAULT_DIFFICULTY,
         goalText: '라면 8그릇 서빙',
         clearText: '첫 영업 성공! 손님들이 다시 오고 싶어 해요.',
+        failText: '첫날은 누구나 서툴러요. 재료 순서와 손님 주문을 다시 확인해 봐요.',
     },
 ];
 

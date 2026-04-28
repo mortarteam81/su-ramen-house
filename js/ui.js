@@ -78,6 +78,12 @@ export class UI {
 
         // 오버레이
         this.pauseOverlay = document.getElementById('overlay-pause');
+        this.storyOverlay = document.getElementById('overlay-story');
+        this.storyDay = document.getElementById('story-day');
+        this.storyTitle = document.getElementById('story-title');
+        this.storyIntro = document.getElementById('story-intro');
+        this.storyGoal = document.getElementById('story-goal');
+        this.storyStartButton = document.getElementById('btn-story-start');
 
         // 게임오버
         this.goServed = document.getElementById('go-served');
@@ -204,6 +210,28 @@ export class UI {
             this.screens[name].classList.add('active');
         }
         this.pauseOverlay.style.display = 'none';
+        this.hideStoryIntro();
+    }
+
+    showStoryIntro(day, onStart) {
+        if (!this.storyOverlay || !day) {
+            onStart?.();
+            return;
+        }
+
+        this.storyDay.textContent = `Day ${day.day}`;
+        this.storyTitle.textContent = day.introTitle || day.title || '오늘의 영업';
+        this.storyIntro.textContent = day.introText || '오늘도 맛있는 라면을 만들어 보세요.';
+        this.storyGoal.textContent = day.goalText || `라면 ${day.goalServed || 0}그릇 서빙`;
+        this.storyOverlay.style.display = 'flex';
+        this.storyStartButton.onclick = () => {
+            this.hideStoryIntro();
+            onStart?.();
+        };
+    }
+
+    hideStoryIntro() {
+        if (this.storyOverlay) this.storyOverlay.style.display = 'none';
     }
 
     // ===== HUD 업데이트 =====
@@ -550,11 +578,6 @@ export class UI {
     }
 
     showDiscardFeedback({ potId, cost = 0 } = {}) {
-        const message = cost > 0
-            ? `🗑️ 라면을 버렸어요. 재료비 손실 -${cost.toLocaleString()}원`
-            : '🗑️ 라면을 버렸어요. 다시 만들 수 있어요!';
-        this.showToast(message, cost > 0 ? 'warning' : 'info', 2400);
-
         const potEl = potId !== null ? document.getElementById(`pot-${potId}`) : null;
         if (!potEl) return;
         potEl.classList.add('discard-feedback');
@@ -926,7 +949,7 @@ export class UI {
         if (this.goResult) {
             this.goResult.textContent = stats.dayCleared
                 ? (stats.day?.clearText || '오늘 목표를 달성했습니다!')
-                : (stats.day ? `${stats.day.title} 목표: ${stats.day.goalText}` : '다음에는 더 잘할 수 있어요!');
+                : (stats.day?.failText || (stats.day ? `${stats.day.title} 목표: ${stats.day.goalText}` : '다음에는 더 잘할 수 있어요!'));
         }
         this.goServed.textContent = stats.served;
         this.goMoney.textContent = stats.money.toLocaleString();

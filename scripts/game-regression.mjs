@@ -88,6 +88,10 @@ async function advanceTime(page, ms) {
 
 async function startGame(page) {
   await page.click('#btn-start');
+  const storyStart = page.locator('#btn-story-start').first();
+  if (await storyStart.count()) {
+    await storyStart.click({ timeout: 3000 }).catch(() => {});
+  }
   return waitForState(
     page,
     (s) => s.state === 'playing' && s.customers.length === 1 && s.customers[0].menuId === 'basic' && s.customers[0].type === 'child',
@@ -163,6 +167,23 @@ async function scenarioFirstBowl(browser, baseUrl) {
     }
     if (errors.length) throw new Error(`Page errors: ${errors.join('; ')}`);
     return { money: served.money, served: served.served };
+  } finally {
+    await page.close().catch(() => {});
+  }
+}
+
+async function scenarioStoryIntro(browser, baseUrl) {
+  const page = await newRegressionPage(browser, baseUrl);
+  try {
+    await page.goto(baseUrl, { waitUntil: 'networkidle' });
+    await page.click('#btn-start');
+    const storyText = await page.locator('#overlay-story').innerText();
+    if (!storyText.includes('Day 1') || !storyText.includes('첫 오픈날') || !storyText.includes('라면 8그릇 서빙')) {
+      throw new Error(`Story intro copy missing expected content: ${storyText}`);
+    }
+    await page.click('#btn-story-start');
+    const state = await waitForState(page, (s) => s.state === 'playing' && s.customers.length === 1, 'story start begins game');
+    return { visible: true, state: state.state, firstCustomer: state.customers[0].type };
   } finally {
     await page.close().catch(() => {});
   }
@@ -342,6 +363,7 @@ const browser = await chromium.launch({ headless: true });
 
 const results = {};
 try {
+  results.storyIntro = await scenarioStoryIntro(browser, baseUrl);
   results.firstBowl = await scenarioFirstBowl(browser, baseUrl);
   results.wrongIngredient = await scenarioWrongIngredientRejection(browser, baseUrl);
   results.cookingCostAndDiscard = await scenarioCookingCostAndDiscard(browser, baseUrl);

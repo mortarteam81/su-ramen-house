@@ -70,6 +70,8 @@ page.on('pageerror', (err) => errors.push(err.message));
 try {
   await page.goto(`http://localhost:${port}`, { waitUntil: 'networkidle' });
   await page.click('#btn-start');
+  const storyStart = page.locator('#btn-story-start:visible');
+  if (await storyStart.count()) await storyStart.click();
 
   let state = await waitForState(
     page,
