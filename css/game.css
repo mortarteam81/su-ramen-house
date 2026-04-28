@@ -1711,3 +1711,106 @@
 #screen-game[data-bowl-cosmetic="bowl_blue"] .pot-progress-bar.done {
     background: linear-gradient(90deg, #4fc3f7, #b3e5fc);
 }
+
+/* ===== Pilot AI character art integration ===== */
+.chef-character .chef-body {
+    background-image: url('../assets/characters/chef/chef_idle.png');
+    background-size: contain;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+    border: none;
+    box-shadow: none;
+    width: 132px;
+    height: 176px;
+    padding: 0;
+}
+
+.chef-character .chef-body::before,
+.chef-character .chef-body::after {
+    content: none;
+}
+
+.chef-character .chef-hat,
+.chef-character .chef-tool,
+.chef-character .chef-spark {
+    display: none;
+}
+
+.chef-cooking .chef-body {
+    background-image: url('../assets/characters/chef/chef_cooking.png');
+}
+
+.chef-happy .chef-body,
+.chef-combo .chef-body {
+    background-image: url('../assets/characters/chef/chef_happy.png');
+}
+
+.chef-surprised .chef-body {
+    background-image: url('../assets/characters/chef/chef_surprised.png');
+}
+
+.customer-type-child .customer-avatar {
+    width: 78px;
+    height: 96px;
+    border: none;
+    background: transparent !important;
+    box-shadow: none;
+    outline: none;
+    overflow: visible;
+}
+
+.customer-type-child .customer-avatar::before,
+.customer-type-child .customer-avatar::after {
+    content: none;
+}
+
+.customer-fullbody-sprite {
+    position: absolute;
+    left: 50%;
+    bottom: -7px;
+    width: 86px;
+    height: 132px;
+    object-fit: contain;
+    object-position: center bottom;
+    transform: translateX(-50%);
+    filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.28));
+    z-index: 1;
+    pointer-events: none;
+}
+
+.customer-type-child .customer-accessory,
+.customer-type-child .customer-emoji,
+.customer-type-child .customer-type-name,
+.customer-type-child .customer-trait {
+    display: none;
+}
+
+@media (max-width: 900px) {
+    .chef-character .chef-body {
+        width: 88px;
+        height: 118px;
+    }
+
+    .customer-type-child .customer-avatar {
+        width: 58px;
+        height: 72px;
+    }
+
+    .customer-fullbody-sprite {
+        width: 66px;
+        height: 98px;
+        bottom: -6px;
+    }
+}
+
+@media (max-width: 560px) {
+    .chef-character .chef-body {
+        width: 72px;
+        height: 98px;
+    }
+
+    .customer-fullbody-sprite {
+        width: 58px;
+        height: 86px;
+    }
+}

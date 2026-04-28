@@ -22,6 +22,15 @@ const CUSTOMER_STYLE_DETAILS = {
     child: { badge: '아이', accessory: '🧸', trait: '기본/계란', tone: '#FFB74D' },
 };
 
+const CHILD_SPRITE_BY_LIFECYCLE = {
+    entering: 'assets/characters/child/child_walking.png',
+    waiting: 'assets/characters/child/child_waiting.png',
+    eating: 'assets/characters/child/child_eating.png',
+    paying: 'assets/characters/child/child_paying.png',
+    leaving: 'assets/characters/child/child_walking.png',
+    'angry-leaving': 'assets/characters/child/child_angry.png',
+};
+
 export class UI {
     constructor() {
         // 화면 요소
@@ -613,6 +622,9 @@ export class UI {
             trait: '손님',
             tone: typeData.color,
         };
+        const childSprite = customer.type === 'child'
+            ? '<img class="customer-fullbody-sprite" src="assets/characters/child/child_walking.png" alt="아이 손님 캐릭터">'
+            : '';
 
         seatEl.innerHTML = `
       <div class="customer customer-enter customer-lifecycle-entering customer-type-${customer.type}" data-customer-id="${customer.id}" data-customer-type="${customer.type}" data-visual-state="entering" style="--customer-color:${typeData.color}; --customer-tone:${styleDetail.tone}">
@@ -626,6 +638,7 @@ export class UI {
           <div class="bubble-recipe" aria-label="레시피 순서">${recipeIcons}</div>
         </div>
         <div class="customer-avatar" style="background-color: ${typeData.color}20; border-color: ${typeData.color}">
+          ${childSprite}
           <span class="customer-accessory" aria-hidden="true">${styleDetail.accessory}</span>
           <span class="customer-emoji">${typeData.emoji}</span>
           <span class="customer-type-name">${typeData.name}</span>
@@ -660,6 +673,10 @@ export class UI {
         if (lifecycleStates.includes(state)) {
             customerEl.classList.add(`customer-lifecycle-${state}`);
             customerEl.dataset.visualState = state;
+        }
+        const childSprite = customerEl.querySelector('.customer-fullbody-sprite');
+        if (childSprite && CHILD_SPRITE_BY_LIFECYCLE[state]) {
+            childSprite.src = CHILD_SPRITE_BY_LIFECYCLE[state];
         }
         const lifeText = customerEl.querySelector('.customer-life-text');
         if (lifeText) lifeText.textContent = text || this.getCustomerLifecycleText(state);
