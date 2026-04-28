@@ -9,6 +9,40 @@ const ui = new UI();
 let previousPotStates = [];
 let lastGameOverStats = null;
 
+const BGM_MUTED_KEY = 'ramen_shop_bgm_muted';
+const bgm = new Audio();
+bgm.preload = 'none';
+bgm.src = 'assets/audio/background-music.mp3';
+bgm.loop = true;
+bgm.volume = 0.32;
+let bgmMuted = localStorage.getItem(BGM_MUTED_KEY) === '1';
+
+function updateMusicButton() {
+    const btn = document.getElementById('btn-music');
+    if (!btn) return;
+    btn.textContent = bgmMuted ? '🔇' : '🎵';
+    btn.classList.toggle('muted', bgmMuted);
+    btn.setAttribute('aria-label', bgmMuted ? '배경음악 켜기' : '배경음악 끄기');
+}
+
+function playBgmFromUserGesture() {
+    if (bgmMuted) return;
+    bgm.play().catch(() => {
+        // 브라우저 자동재생 정책상 실패할 수 있다. 다음 사용자 클릭에서 다시 시도한다.
+    });
+}
+
+function setBgmMuted(nextMuted) {
+    bgmMuted = Boolean(nextMuted);
+    localStorage.setItem(BGM_MUTED_KEY, bgmMuted ? '1' : '0');
+    if (bgmMuted) {
+        bgm.pause();
+    } else {
+        playBgmFromUserGesture();
+    }
+    updateMusicButton();
+}
+
 // ===== 화면 초기화 =====
 function initMenuScreen() {
     ui.updateMenuScreen(game.saveData);
@@ -18,8 +52,16 @@ function initMenuScreen() {
 
 // ===== 이벤트 바인딩 =====
 
+updateMusicButton();
+
+document.getElementById('btn-music').addEventListener('click', (e) => {
+    e.stopPropagation();
+    setBgmMuted(!bgmMuted);
+});
+
 // 메인 메뉴 버튼
 document.getElementById('btn-start').addEventListener('click', () => {
+    playBgmFromUserGesture();
     showStoryThenStart();
 });
 
@@ -36,6 +78,7 @@ document.getElementById('btn-howto-back').addEventListener('click', () => {
 });
 
 document.getElementById('btn-replay-guide').addEventListener('click', () => {
+    playBgmFromUserGesture();
     startNewGame({ replayFirstBowlGuide: true });
 });
 
@@ -72,6 +115,7 @@ document.getElementById('btn-pause').addEventListener('click', () => {
 document.getElementById('btn-resume').addEventListener('click', () => {
     game.resume();
     ui.hidePause();
+    playBgmFromUserGesture();
 });
 
 document.getElementById('btn-shop-ingame').addEventListener('click', () => {
@@ -85,6 +129,7 @@ document.getElementById('btn-quit').addEventListener('click', () => {
 
 // 게임 오버
 document.getElementById('btn-retry').addEventListener('click', () => {
+    playBgmFromUserGesture();
     if (lastGameOverStats?.dayCleared) {
         showStoryThenStart();
     } else {
@@ -181,6 +226,7 @@ function showStoryThenStart(options = {}) {
 }
 
 function startNewGame({ replayFirstBowlGuide = false, dayIndex = null } = {}) {
+    playBgmFromUserGesture();
     ui.applyCosmetics(game.getCosmetics());
     ui.showScreen('game');
     ui.resetSeats();

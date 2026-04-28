@@ -165,3 +165,21 @@ Verification passed:
 - `node scripts/game-regression.mjs`
 - `node _review/wave11-mobile-capture.mjs`
 - Vision QA for 375x667 start/CTA/done and 390x844 CTA found no no-scroll flow blockers.
+
+## 2026-04-28 Wave 12 Implementation — Background Music
+
+User uploaded MP3 source and approved Rel solo implementation.
+
+Implemented:
+- Copied uploaded MP3 to `assets/audio/background-music.mp3`.
+- Added HUD music toggle button `#btn-music`.
+- Added looping background music in `js/main.js` with `preload='none'` to avoid Playwright/networkidle hangs before user gesture.
+- Playback starts after user interactions such as game start/retry/resume/story flow, respecting browser autoplay policy.
+- Mute state persists via localStorage key `ramen_shop_bgm_muted`.
+- Added `docs/background-music-plan.md`.
+
+Verification passed:
+- `node --check js/*.js`
+- `node scripts/first-bowl-regression.mjs`
+- `node scripts/game-regression.mjs`
+- Local HTTP check: `/assets/audio/background-music.mp3` returns 200 `audio/mpeg`.

@@ -2857,3 +2857,33 @@
         scroll-snap-align: start;
     }
 }
+
+/* ===== Background music controls ===== */
+.btn-music {
+    min-width: 44px;
+}
+
+.btn-music.muted {
+    opacity: 0.72;
+    filter: grayscale(0.35);
+}
+
+@media (max-width: 900px) {
+    .game-hud {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-areas:
+            'money served lives music pause'
+            'day day day combo combo';
+    }
+
+    #btn-music {
+        grid-area: music;
+        margin-left: 0;
+        width: 100%;
+        min-width: 44px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
