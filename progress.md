@@ -250,3 +250,18 @@ Verification passed:
 - `node --check js/*.js`
 - `node scripts/first-bowl-regression.mjs`
 - `node scripts/game-regression.mjs`
+
+## 2026-04-28 Wave 17 Implementation — Show All Mobile Ingredients
+
+User reported mobile ingredients still felt like only four were visible. Decided to remove `더보기` and show all ingredients by default for elementary-school discoverability.
+
+Implemented:
+- Removed mobile ingredient `더보기/접기` toggle generation from `js/ui.js`.
+- Mobile ingredient shelf now shows all 9 ingredients by default in a 3x3 grid.
+- Added `_review/wave17-all-ingredients-capture.mjs` for mobile verification.
+
+Verification passed:
+- `node --check js/*.js`
+- `node scripts/first-bowl-regression.mjs`
+- `node scripts/game-regression.mjs`
+- Vision QA for 375px mobile: all 9 ingredients visible/discoverable, no serious blockers.

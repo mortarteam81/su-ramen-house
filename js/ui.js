@@ -334,21 +334,6 @@ export class UI {
             btn.addEventListener('click', () => onIngredientClick(id));
             this.ingredientShelf.appendChild(btn);
         }
-
-        const moreBtn = document.createElement('button');
-        moreBtn.type = 'button';
-        moreBtn.className = 'ingredient-more-toggle';
-        moreBtn.setAttribute('aria-expanded', 'false');
-        moreBtn.innerHTML = '<span class="ingredient-emoji">➕</span><span class="ingredient-name">더보기</span>';
-        moreBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const expanded = this.ingredientShelf.classList.toggle('expanded');
-            moreBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-            moreBtn.innerHTML = expanded
-                ? '<span class="ingredient-emoji">➖</span><span class="ingredient-name">접기</span>'
-                : '<span class="ingredient-emoji">➕</span><span class="ingredient-name">더보기</span>';
-        });
-        this.ingredientShelf.appendChild(moreBtn);
     }
 
     getActiveCustomers(game) {
