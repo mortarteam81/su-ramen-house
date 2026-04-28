@@ -183,7 +183,7 @@ export class CustomerManager {
                 const seatIdx = i;
                 setTimeout(() => {
                     this.seats[seatIdx] = null;
-                }, 800);
+                }, 2700);
                 return reward;
             }
         }

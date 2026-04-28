@@ -108,6 +108,20 @@ document.querySelectorAll('.pot-container').forEach(potEl => {
             return;
         }
 
+        if (e.target.classList.contains('btn-discard')) {
+            const potIndex = parseInt(potEl.dataset.pot);
+            const result = game.discardPot(potIndex);
+            if (result?.success) {
+                const cost = result.discarded?.costSpent || 0;
+                ui.hideRecipeHint();
+                ui.setChefState('surprised', cost > 0 ? '재료비는 손실됐지만 다시 만들면 돼요!' : '다시 만들어 볼까요?', { duration: 1300 });
+                ui.showDiscardFeedback({ potId: potIndex, cost });
+            } else if (result) {
+                ui.showToast(result.reason, 'warning');
+            }
+            return;
+        }
+
         // 냄비 선택
         const potIndex = parseInt(potEl.dataset.pot);
         game.selectPot(potIndex);
@@ -233,8 +247,8 @@ function startNewGame({ replayFirstBowlGuide = false } = {}) {
         ui.playCustomerServedLifecycle(customer);
         ui.setChefState(combo >= 2 ? 'combo' : 'happy', combo >= 2 ? `${combo}콤보, 좋아요!` : '서빙 성공!', { duration: 1200 });
         ui.showServeFeedback({ success: true, customer, reward });
-        setTimeout(() => ui.removeCustomer(customer.seatIndex, false), 1250);
-        ui.showToast(`✅ 서빙 성공! +${reward.total.toLocaleString()}원`, 'success');
+        setTimeout(() => ui.removeCustomer(customer.seatIndex, false), 2750);
+        ui.showToast(`✅ 판매 +${reward.total.toLocaleString()}원`, 'success');
 
         // 플로팅 머니
         const seatEl = ui.counterSeats.children[customer.seatIndex];
@@ -248,6 +262,11 @@ function startNewGame({ replayFirstBowlGuide = false } = {}) {
         ui.setChefState('combo', `${combo}콤보 보너스!`, { duration: 1600 });
         ui.showToast(`🔥 ${combo} 콤보! +${bonus.toLocaleString()}원 보너스!`, 'combo');
         ui.showComboCelebration(combo, bonus);
+    };
+
+    game.onCostCharged = (result) => {
+        if (!result?.cost) return;
+        ui.showToast(`재료비 -${result.cost.toLocaleString()}원`, 'info', 1600);
     };
 
     game.onComboBreak = (combo, message) => {
@@ -391,6 +410,8 @@ function getGameDebugState() {
             targetRecipe: pot.targetRecipe,
             addedIngredients: [...pot.addedIngredients],
             cookProgress: Number(pot.cookProgress.toFixed(3)),
+            costSpent: Number(pot.costSpent) || 0,
+            costCharged: Boolean(pot.costCharged),
             visibleText: document.getElementById(`pot-${pot.id}`)?.innerText.trim() || '',
         })),
         guidance: {

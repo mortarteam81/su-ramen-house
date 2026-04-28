@@ -28,6 +28,8 @@ export class CookingStation {
             cookStartTime: null,       // 조리 시작 시간
             cookDuration: 0,           // 필요 조리 시간
             cookProgress: 0,           // 0~1
+            costSpent: 0,              // 이 냄비에 이미 사용한 재료비
+            costCharged: false,        // 재료비 차감 여부
         };
     }
 
@@ -192,6 +194,23 @@ export class CookingStation {
         if (this.selectedPot === potId) {
             this.selectedPot = potId; // 유지
         }
+    }
+
+    /** 냄비 폐기 - 손실된 재료비를 반환하고 초기화 */
+    discardPot(potId) {
+        const pot = this.pots[potId];
+        if (!pot || ![POT_STATE.FILLING, POT_STATE.COOKING, POT_STATE.DONE].includes(pot.state)) {
+            return { success: false, reason: '버릴 라면이 없습니다.' };
+        }
+
+        const discarded = {
+            recipeId: pot.targetRecipe,
+            state: pot.state,
+            costSpent: Number(pot.costSpent) || 0,
+            costCharged: Boolean(pot.costCharged),
+        };
+        this.resetPot(potId);
+        return { success: true, discarded };
     }
 
     /** 게임 루프에서 호출 - 조리 진행 업데이트 */

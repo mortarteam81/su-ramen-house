@@ -1,5 +1,5 @@
 /* ===== 게임 루프 & 상태 관리 ===== */
-import { COSMETIC_ITEMS, DAY_STAGES, DEFAULT_DIFFICULTY, DIFFICULTY_PRESETS, GAME, MENU_UNLOCK_THRESHOLDS } from './config.js';
+import { COSMETIC_ITEMS, DAY_STAGES, DEFAULT_DIFFICULTY, DIFFICULTY_PRESETS, GAME, MENU_UNLOCK_THRESHOLDS, RECIPES } from './config.js';
 import { CookingStation } from './cooking.js';
 import { CustomerManager } from './customer.js';
 import { MenuManager } from './menu.js';
@@ -45,6 +45,7 @@ export class Game {
         this.onLifeLost = null;       // 생명 감소
         this.onMenuUnlock = null;     // 메뉴 해금
         this.onDayClear = null;       // 하루 목표 달성
+        this.onCostCharged = null;    // 재료비 차감
 
         this._animFrameId = null;
         this._pauseStartTime = null;
@@ -200,13 +201,39 @@ export class Game {
     /** 재료 추가 */
     addIngredient(ingredientId) {
         if (this.state !== GAME_STATE.PLAYING) return null;
-        return this.cooking.addIngredient(ingredientId);
+        const result = this.cooking.addIngredient(ingredientId);
+        return this.applyCookingCostIfNeeded(result);
     }
 
     /** 특정 레시피로 조리 확정 */
     confirmCook(recipeId) {
         if (this.state !== GAME_STATE.PLAYING) return null;
-        return this.cooking.confirmCook(recipeId);
+        const result = this.cooking.confirmCook(recipeId);
+        return this.applyCookingCostIfNeeded(result);
+    }
+
+    applyCookingCostIfNeeded(result) {
+        if (!result?.success || !result.cooking || !result.recipeId) return result;
+
+        const pot = this.cooking.getSelectedPot();
+        if (!pot || pot.costCharged) return result;
+
+        const cost = Math.max(0, Number(RECIPES[result.recipeId]?.cost) || 0);
+        pot.costSpent = cost;
+        pot.costCharged = true;
+        if (cost > 0) {
+            this.money -= cost;
+            this.sessionMoney -= cost;
+        }
+        const costResult = { ...result, cost };
+        if (this.onCostCharged) this.onCostCharged(costResult, pot);
+        return costResult;
+    }
+
+    /** 냄비 폐기 */
+    discardPot(potId) {
+        if (this.state !== GAME_STATE.PLAYING) return null;
+        return this.cooking.discardPot(potId);
     }
 
     /** 수익 기반 메뉴 자동 해금 */

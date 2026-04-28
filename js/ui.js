@@ -367,6 +367,9 @@ export class UI {
             const progressBar = el.querySelector('.pot-progress-bar');
             const statusEl = el.querySelector('.pot-status');
             const serveBtn = el.querySelector('.btn-serve');
+            const discardBtn = el.querySelector('.btn-discard');
+            const canDiscard = [POT_STATE.FILLING, POT_STATE.COOKING, POT_STATE.DONE].includes(pot.state);
+            if (discardBtn) discardBtn.style.display = canDiscard ? 'block' : 'none';
 
             // 선택 상태
             el.classList.toggle('selected', cookingStation.selectedPot === i);
@@ -404,7 +407,7 @@ export class UI {
                     progressBar.style.width = `${pot.cookProgress * 100}%`;
                     progressBar.className = 'pot-progress-bar cooking';
                     const remaining = Math.ceil((1 - pot.cookProgress) * (pot.cookDuration / 1000));
-                    statusEl.textContent = `보글보글 조리 중... ${remaining}초`;
+                    statusEl.textContent = `보글보글 조리 중... ${remaining}초 · 재료비 ${Number(pot.costSpent || 0).toLocaleString()}원`;
                     serveBtn.style.display = 'none';
                     el.classList.add('cooking');
                     el.classList.remove('done');
@@ -418,7 +421,7 @@ export class UI {
                     this.renderPotAccents(potVisual, pot);
                     progressBar.style.width = '100%';
                     progressBar.className = 'pot-progress-bar done';
-                    statusEl.textContent = '띵! 완성! 서빙하세요!';
+                    statusEl.textContent = `띵! 완성! 서빙하세요! · 재료비 ${Number(pot.costSpent || recipe?.cost || 0).toLocaleString()}원`;
                     serveBtn.style.display = 'block';
                     el.classList.remove('cooking');
                     el.classList.add('done');
@@ -546,6 +549,27 @@ export class UI {
         setTimeout(() => label.remove(), 1100);
     }
 
+    showDiscardFeedback({ potId, cost = 0 } = {}) {
+        const message = cost > 0
+            ? `🗑️ 라면을 버렸어요. 재료비 손실 -${cost.toLocaleString()}원`
+            : '🗑️ 라면을 버렸어요. 다시 만들 수 있어요!';
+        this.showToast(message, cost > 0 ? 'warning' : 'info', 2400);
+
+        const potEl = potId !== null ? document.getElementById(`pot-${potId}`) : null;
+        if (!potEl) return;
+        potEl.classList.add('discard-feedback');
+        setTimeout(() => potEl.classList.remove('discard-feedback'), 760);
+
+        const label = document.createElement('div');
+        label.className = 'serve-result-pop fail';
+        label.textContent = cost > 0 ? `재료비 손실 -${cost.toLocaleString()}원` : '폐기 완료';
+        const rect = potEl.getBoundingClientRect();
+        label.style.left = `${rect.left + rect.width / 2}px`;
+        label.style.top = `${rect.top}px`;
+        document.body.appendChild(label);
+        setTimeout(() => label.remove(), 1200);
+    }
+
     showComboCelebration(combo, bonus) {
         const el = document.createElement('div');
         el.className = 'combo-celebration';
@@ -578,8 +602,8 @@ export class UI {
                 const btn = document.createElement('button');
                 btn.className = `btn-confirm-cook ${index === 0 ? 'primary-cta' : 'secondary-cta'}`;
                 btn.innerHTML = index === 0
-                    ? `🔥 ${r.name} 조리 시작`
-                    : `${r.emoji} ${r.name}도 가능`;
+                    ? `🔥 ${r.name} 조리 시작 · 재료비 ${Number(r.cost || 0).toLocaleString()}원`
+                    : `${r.emoji} ${r.name}도 가능 · 재료비 ${Number(r.cost || 0).toLocaleString()}원`;
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     if (onConfirmCook) onConfirmCook(id);
@@ -594,7 +618,7 @@ export class UI {
             hintsText.className = 'recipe-hint-text';
             const hints = possibleRecipes.map(id => {
                 const r = RECIPES[id];
-                return `${r.emoji} ${r.name}: ${r.ingredients.map(i => INGREDIENTS[i].emoji).join('→')}`;
+                return `${r.emoji} ${r.name}: ${r.ingredients.map(i => INGREDIENTS[i].emoji).join('→')} · 재료비 ${Number(r.cost || 0).toLocaleString()}원`;
             });
             hintsText.textContent = (confirmableRecipes && confirmableRecipes.length > 0 ? ' 또는 재료 추가: ' : '') + hints.join(' | ');
             this.recipeHintContent.appendChild(hintsText);
@@ -699,8 +723,8 @@ export class UI {
 
     playCustomerServedLifecycle(customer) {
         this.setCustomerLifecycle(customer, 'eating', '후루룩! 맛있어요');
-        setTimeout(() => this.setCustomerLifecycle(customer, 'paying', '계산할게요 💰'), 420);
-        setTimeout(() => this.setCustomerLifecycle(customer, 'leaving', '잘 먹었습니다!'), 820);
+        setTimeout(() => this.setCustomerLifecycle(customer, 'paying', '계산할게요 💰'), 1200);
+        setTimeout(() => this.setCustomerLifecycle(customer, 'leaving', '잘 먹었습니다!'), 2000);
     }
 
     getCustomerVisualState(customer) {
@@ -751,7 +775,7 @@ export class UI {
             customerEl.classList.add(isAngry ? 'customer-angry' : 'customer-happy');
             setTimeout(() => {
                 seatEl.innerHTML = '<div class="seat-empty">빈자리</div>';
-            }, isAngry ? 650 : 520);
+            }, isAngry ? 1100 : 2700);
         } else {
             seatEl.innerHTML = '<div class="seat-empty">빈자리</div>';
         }
@@ -797,6 +821,8 @@ export class UI {
             const displayRecipe = menu.unlocked ? ingredientList : '해금하면 레시피가 공개됩니다';
             const bestTipText = stats.bestTip > 0 ? `${stats.bestTip.toLocaleString()}원` : '-';
             const bestRewardText = stats.bestReward > 0 ? `${stats.bestReward.toLocaleString()}원` : '-';
+            const productionCost = Number(menu.cost) || 0;
+            const expectedProfit = (Number(menu.price) || 0) - productionCost;
 
             card.innerHTML = `
         <div class="shop-card-header">
@@ -808,7 +834,7 @@ export class UI {
         </div>
         <div class="shop-card-info">
           <p class="shop-card-recipe">레시피: ${displayRecipe}</p>
-          <p class="shop-card-price">판매가: ${menu.price.toLocaleString()}원</p>
+          <p class="shop-card-price">판매가: ${menu.price.toLocaleString()}원 · 재료비: ${productionCost.toLocaleString()}원 · 예상이익: ${expectedProfit.toLocaleString()}원</p>
           <p class="shop-card-time">조리 시간: ${menu.cookTime / 1000}초</p>
           <div class="shop-card-collection" aria-label="메뉴 판매 기록">
             <span>판매 ${stats.served.toLocaleString()}그릇</span>
@@ -922,6 +948,9 @@ export class UI {
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
         toast.textContent = message;
+        if (type === 'warning' && String(message).includes('재료비 손실')) {
+            toast.classList.add('toast-discard-loss');
+        }
         this.toastContainer.appendChild(toast);
 
         // 등장 애니메이션

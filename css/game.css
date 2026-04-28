@@ -864,10 +864,10 @@
     text-align: center;
 }
 
-.btn-serve {
+.btn-serve,
+.btn-discard {
     width: 100%;
     padding: var(--space-sm) var(--space-md);
-    background: linear-gradient(135deg, var(--color-success), #388E3C);
     color: white;
     border: none;
     border-radius: var(--radius-sm);
@@ -878,9 +878,32 @@
     animation: pulse 0.6s ease;
 }
 
-.btn-serve:hover {
+.btn-serve {
+    background: linear-gradient(135deg, var(--color-success), #388E3C);
+}
+
+.btn-discard {
+    margin-top: var(--space-xs);
+    background: linear-gradient(135deg, #8D6E63, #5D4037);
+    font-size: 12px;
+}
+
+.btn-serve:hover,
+.btn-discard:hover {
     transform: scale(1.05);
+}
+
+.btn-serve:hover {
     box-shadow: 0 0 15px rgba(102, 187, 106, 0.4);
+}
+
+.btn-discard:hover {
+    box-shadow: 0 0 15px rgba(141, 110, 99, 0.4);
+}
+
+.pot-container.discard-feedback {
+    border-color: #8D6E63;
+    box-shadow: 0 0 0 4px rgba(141, 110, 99, 0.18), 0 0 24px rgba(141, 110, 99, 0.35);
 }
 
 .pot-container.guide-target,
@@ -1808,4 +1831,10 @@
 /* Keep the first-bowl guide compact once character art is present. */
 .first-bowl-guide .first-guide-steps {
     display: none;
+}
+
+.toast-discard-loss {
+    font-size: 15px;
+    font-weight: 800;
+    border: 3px solid rgba(255, 255, 255, 0.85);
 }
